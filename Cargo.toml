@@ -1,0 +1,14 @@
+[package]
+name = "planetarium"
+version = "0.1.0"
+description = "Sub-pixel precision light spot rendering library"
+repository = "https://github.com/ravenexp/planetarium"
+authors = ["Sergey Kvachonok <ravenexp@gmail.com>"]
+edition = "2018"
+license = "MIT"
+keywords = ["astronomy", "simulation"]
+categories = ["graphics", "science"]
+readme = "README.md"
+
+[lib]
+doctest = false
