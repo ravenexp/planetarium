@@ -4,6 +4,8 @@
 //! Sub-pixel precision light spot rendering library for astronomy
 //! and video tracking applications.
 
+mod draw;
+
 /// Image pixel value type: 16-bit pixels
 pub type Pixel = u16;
 
@@ -111,7 +113,10 @@ impl Canvas {
             return;
         }
 
-        todo!("Spot rendering is not implemented")
+        // `self.spots` can not be borrowed for `draw_spot()`
+        for spot_id in 0..self.spots.len() {
+            self.draw_spot(spot_id)
+        }
     }
 
     /// Returns the rendered image pixels buffer.
