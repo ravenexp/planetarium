@@ -77,22 +77,48 @@ impl Canvas {
             return;
         }
 
-        // TODO: Pixel value must depend on the coordinates
-        //       for more complex shapes (e.g. Airy disk).
-        let scale = Pixel::MAX as f32;
-        let pixel = (scale * spot.intensity * self.brightness) as Pixel;
-
         for i in bbox.y0..bbox.y1 {
             let loff = (i * self.width) as usize;
 
             for j in bbox.x0..bbox.x1 {
-                let coff = j as usize;
+                let poff = loff + j as usize;
 
-                // TODO: Evaluate pixel intensity as a function of distance
-                //       from the spot center.
-                self.pixbuf[loff + coff] = pixel;
+                let pixval = self.eval_spot_pixel(spot, j, i);
+
+                // Compose light spot patterns using linear intesity addition
+                // with numeric saturation instead of wrapping overflow.
+                self.pixbuf[poff] = self.pixbuf[poff].saturating_add(pixval);
             }
         }
+    }
+
+    /// Evaluates the spot pixel intensity as a function of the radius vector
+    /// drawn from the spot center.
+    ///
+    /// This version calculates a unit Airy disk pattern deformed
+    /// by the `SpotShape` transformation matrix.
+    fn eval_spot_pixel(&self, spot: &SpotRec, x: u32, y: u32) -> Pixel {
+        // Image pixel intensity range
+        // FIXME: Do we need to support 10-bit and 12-bit images here?
+        let value_scale = Pixel::MAX as f32;
+
+        // Current pixel radius vector
+        let rvec = ((x as f32 - spot.position.0), (y as f32 - spot.position.1));
+
+        // Transformed radius vector
+        // TODO: Use matrix multiplication for coordinate transform.
+        //       Invert and cache the shape transform matrix.
+        let tvec = ((rvec.0 / spot.shape.xx), (rvec.1 / spot.shape.yy));
+
+        // Transformed radial distance
+        let rdist = tvec.0.hypot(tvec.1);
+
+        // Perform pre-computed spot pattern LUT lookup: once per pixel.
+        let lut_index = (rdist * self.pattern_scale) as usize;
+        let pattern_val = self.pattern_lut[lut_index];
+
+        // Calculate the final pixel value
+        (value_scale * spot.intensity * self.brightness * pattern_val) as Pixel
     }
 }
 
@@ -154,5 +180,28 @@ mod tests {
         assert_eq!(bbox.x1, 2);
         assert_eq!(bbox.y0, 11);
         assert_eq!(bbox.y1, 16);
+    }
+
+    #[test]
+    fn draw_spot() {
+        let shape = SpotShape::default();
+        let mut c = Canvas::new(8, 8);
+
+        let spot1 = c.add_spot((1.1, 4.3), shape, 0.3);
+        let spot2 = c.add_spot((4.6, 7.2), shape, 0.4);
+        let spot3 = c.add_spot((6.8, 2.6), shape, 0.4);
+        let spot4 = c.add_spot((5.1, 4.6), shape, 0.2);
+
+        c.draw_spot(spot1);
+        assert_eq!(c.pixbuf[8 * 4 + 1], 19660);
+
+        c.draw_spot(spot2);
+        assert_eq!(c.pixbuf[8 * 7 + 5], 45874);
+
+        c.draw_spot(spot3);
+        assert_eq!(c.pixbuf[8 * 3 + 7], 52428);
+
+        c.draw_spot(spot4);
+        assert_eq!(c.pixbuf[8 * 5 + 5], 65535);
     }
 }

@@ -60,6 +60,12 @@ pub struct Canvas {
 
     /// Image pixel buffer
     pixbuf: Vec<Pixel>,
+
+    /// Spot pattern lookup table
+    pattern_lut: Vec<f32>,
+
+    /// Pattern LUT index scaling factor
+    pattern_scale: f32,
 }
 
 impl Default for SpotShape {
@@ -80,12 +86,19 @@ impl Canvas {
         let brightness = 1.0;
         let pixbuf = vec![0; (width * height) as usize];
 
+        // TODO: Spot pattern LUT and index scale calculation.
+        // FIXME: Define LUT size <=> `SpotShape::EFFECTIVE_SPOT_RADIUS` relationship.
+        let pattern_lut = vec![1.0; 256];
+        let pattern_scale = 8.0;
+
         Canvas {
             width,
             height,
             spots,
             brightness,
             pixbuf,
+            pattern_lut,
+            pattern_scale,
         }
     }
 
