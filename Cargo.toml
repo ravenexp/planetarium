@@ -12,3 +12,6 @@ readme = "README.md"
 
 [lib]
 doctest = false
+
+[dependencies]
+libm = "0.2"

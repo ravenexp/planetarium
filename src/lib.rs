@@ -5,6 +5,7 @@
 //! and video tracking applications.
 
 mod draw;
+mod pattern;
 
 /// Image pixel value type: 16-bit pixels
 pub type Pixel = u16;
@@ -85,11 +86,7 @@ impl Canvas {
         let spots = Vec::with_capacity(8);
         let brightness = 1.0;
         let pixbuf = vec![0; (width * height) as usize];
-
-        // TODO: Spot pattern LUT and index scale calculation.
-        // FIXME: Define LUT size <=> `SpotShape::EFFECTIVE_SPOT_RADIUS` relationship.
-        let pattern_lut = vec![1.0; 256];
-        let pattern_scale = 8.0;
+        let (pattern_lut, pattern_scale) = Self::build_pattern_lut();
 
         Canvas {
             width,
