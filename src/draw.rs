@@ -7,20 +7,29 @@
 //! Contains private types and implementations of private methods
 //! for the existing public types.
 
+use std::f32::consts::FRAC_1_SQRT_2;
+
 use super::{Canvas, Pixel, SpotId, SpotRec, SpotShape};
+use crate::pattern::{J1_ZERO1, J1_ZERO2};
 
 impl SpotShape {
     /// Fudge factor for the effective spot radius estimation
-    const EFFECTIVE_RADIUS_FACTOR: f32 = 3.0; // TODO: re-evaluate for Airy disks
+    ///
+    /// The unit radius is the radius of the Airy disc at the first minumum,
+    /// also known as the diffraction radius.
+    /// The effective (rasterized) spot radius is arbitrarily chosen as
+    /// the radius of the second Airy disc minumum.
+    const EFFECTIVE_RADIUS_FACTOR: f32 = J1_ZERO2 / J1_ZERO1;
 
     /// Calculates the effective radius of the spot image.
     fn effective_radius(&self) -> f32 {
         // FIXME:
         //   Come up with a better effective radius estimation.
         //   Linear operator norm looks good, but is difficult to calculate.
+        let norm = FRAC_1_SQRT_2 * self.xx.hypot(self.yy).max(self.xy.hypot(self.yx));
 
-        // Re = F*max(sqrt(a11^2 + a22^2), sqrt(a12^2 + a21^2))
-        Self::EFFECTIVE_RADIUS_FACTOR * self.xx.hypot(self.yy).max(self.xy.hypot(self.yx))
+        // Re = F*max(sqrt(a11^2 + a22^2), sqrt(a12^2 + a21^2)) / sqrt(2)
+        Self::EFFECTIVE_RADIUS_FACTOR * norm
     }
 }
 
@@ -113,9 +122,12 @@ impl Canvas {
         // Transformed radial distance
         let rdist = tvec.0.hypot(tvec.1);
 
-        // Perform pre-computed spot pattern LUT lookup: once per pixel.
-        let lut_index = (rdist * self.pattern_scale) as usize;
-        let pattern_val = self.pattern_lut[lut_index];
+        // Perform pre-computed spot pattern LUT lookup for each pixel:
+
+        // Calculate the LUT index with rounding to the nearest integer.
+        let lut_index = (rdist * self.pattern_scale + 0.5) as usize;
+        // Transparently zero-extend the pattern function LUT to infinity.
+        let pattern_val = self.pattern_lut.get(lut_index).copied().unwrap_or(0.0);
 
         // Calculate the final pixel value
         (value_scale * spot.intensity * self.brightness * pattern_val) as Pixel
@@ -130,10 +142,10 @@ mod tests {
     fn calc_radius() {
         let shape = SpotShape::default();
 
-        const RE: f32 = 4.2426;
+        const RE: f32 = 1.8309;
         let re = shape.effective_radius();
 
-        assert!((re - RE).abs() < 1e-3, "re = {}, RE = {}", re, RE);
+        assert!((re - RE).abs() < 1e-4, "re = {}, RE = {}", re, RE);
     }
 
     #[test]
@@ -153,18 +165,18 @@ mod tests {
 
         let bbox = BoundingBox::new(&spot, width, height);
         assert!(!bbox.is_empty());
-        assert_eq!(bbox.x0, 3);
-        assert_eq!(bbox.x1, 12);
-        assert_eq!(bbox.y0, 4);
-        assert_eq!(bbox.y1, 14);
+        assert_eq!(bbox.x0, 5);
+        assert_eq!(bbox.x1, 10);
+        assert_eq!(bbox.y0, 7);
+        assert_eq!(bbox.y1, 12);
 
         spot.position = (10.5, 13.3);
 
         let bbox = BoundingBox::new(&spot, width, height);
         assert!(!bbox.is_empty());
-        assert_eq!(bbox.x0, 6);
-        assert_eq!(bbox.x1, 15);
-        assert_eq!(bbox.y0, 9);
+        assert_eq!(bbox.x0, 8);
+        assert_eq!(bbox.x1, 13);
+        assert_eq!(bbox.y0, 11);
         assert_eq!(bbox.y1, 16);
 
         spot.position = (-5.5, 20.3);
@@ -172,13 +184,13 @@ mod tests {
         let bbox = BoundingBox::new(&spot, width, height);
         assert!(bbox.is_empty());
 
-        spot.position = (-2.5, 15.3);
+        spot.position = (-1.0, 15.5);
 
         let bbox = BoundingBox::new(&spot, width, height);
         assert!(!bbox.is_empty());
         assert_eq!(bbox.x0, 0);
-        assert_eq!(bbox.x1, 2);
-        assert_eq!(bbox.y0, 11);
+        assert_eq!(bbox.x1, 1);
+        assert_eq!(bbox.y0, 13);
         assert_eq!(bbox.y1, 16);
     }
 
@@ -193,15 +205,15 @@ mod tests {
         let spot4 = c.add_spot((5.1, 4.6), shape, 0.2);
 
         c.draw_spot(spot1);
-        assert_eq!(c.pixbuf[8 * 4 + 1], 19660);
+        assert_eq!(c.pixbuf[8 * 4 + 1], 13509);
 
         c.draw_spot(spot2);
-        assert_eq!(c.pixbuf[8 * 7 + 5], 45874);
+        assert_eq!(c.pixbuf[8 * 7 + 5], 12122);
 
         c.draw_spot(spot3);
-        assert_eq!(c.pixbuf[8 * 3 + 7], 52428);
+        assert_eq!(c.pixbuf[8 * 3 + 7], 12122);
 
         c.draw_spot(spot4);
-        assert_eq!(c.pixbuf[8 * 5 + 5], 65535);
+        assert_eq!(c.pixbuf[8 * 5 + 5], 6879);
     }
 }
