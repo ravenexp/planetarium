@@ -56,6 +56,9 @@ pub struct Canvas {
     /// Canvas height in pixels
     height: u32,
 
+    /// Background light level
+    background: Pixel,
+
     /// Light spot draw list
     spots: Vec<SpotRec>,
 
@@ -86,6 +89,7 @@ impl Default for SpotShape {
 impl Canvas {
     /// Creates a new clear canvas to render light spots on.
     pub fn new(width: u32, height: u32) -> Self {
+        let background = 0;
         let spots = Vec::with_capacity(8);
         let brightness = 1.0;
         let pixbuf = vec![0; (width * height) as usize];
@@ -94,6 +98,7 @@ impl Canvas {
         Canvas {
             width,
             height,
+            background,
             spots,
             brightness,
             pixbuf,
@@ -120,13 +125,16 @@ impl Canvas {
         id
     }
 
-    /// Clears the canvas image.
+    /// Clears the canvas image (fills with background pixels).
     pub fn clear(&mut self) {
-        self.pixbuf.fill(0)
+        self.pixbuf.fill(self.background)
     }
 
     /// Draws the light spots onto the canvas image.
     pub fn draw(&mut self) {
+        // Always clear the canvas first to avoid unintended overdraw.
+        self.clear();
+
         if self.brightness <= 0.0 {
             return;
         }
@@ -145,6 +153,16 @@ impl Canvas {
     /// Returns the canvas dimensions as `(width, height)`.
     pub fn dimensions(&self) -> (u32, u32) {
         (self.width, self.height)
+    }
+
+    /// Sets the background light level (dark pixel value).
+    pub fn set_background(&mut self, level: Pixel) {
+        self.background = level;
+    }
+
+    /// Sets the global brightness level (light spot intensity adjustment).
+    pub fn set_brightness(&mut self, brightness: f32) {
+        self.brightness = brightness;
     }
 }
 
@@ -178,5 +196,22 @@ mod tests {
 
         assert_eq!(spot1, 0);
         assert_eq!(spot2, 1);
+    }
+
+    #[test]
+    fn clear_canvas() {
+        let mut c = Canvas::new(16, 16);
+
+        assert_eq!(c.pixels()[0], 0);
+
+        c.set_background(100);
+        c.clear();
+
+        assert_eq!(c.pixels()[0], 100);
+
+        c.set_background(200);
+        c.draw();
+
+        assert_eq!(c.pixels()[0], 200);
     }
 }
