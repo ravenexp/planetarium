@@ -7,7 +7,7 @@
 //! Contains private types and implementations of private methods
 //! for the existing public types.
 
-use super::{Canvas, Pixel, SpotId, SpotRec, SpotShape};
+use super::{Canvas, Pixel, Point, SpotId, SpotRec, SpotShape};
 use crate::pattern::{J1_ZERO1, J1_ZERO2};
 
 impl SpotShape {
@@ -70,7 +70,7 @@ impl BoundingBox {
     /// Clips to box dimensions to the underlying canvas size.
     fn new(spot: &SpotRec, width: u32, height: u32) -> Self {
         let (rx, ry) = spot.shape.effective_radius_xy();
-        let (px, py) = spot.position;
+        let (px, py) = spot.position();
         let (w, h) = (width as i32, height as i32);
 
         let x0 = ((px - rx).floor() as i32).max(0).min(w) as u32;
@@ -87,13 +87,24 @@ impl BoundingBox {
     }
 }
 
+impl SpotRec {
+    /// Calculates the effective spot position by taking into account
+    /// the associated position offset vector.
+    fn position(&self) -> Point {
+        (
+            (self.position.0 + self.offset.0),
+            (self.position.1 + self.offset.1),
+        )
+    }
+}
+
 impl Canvas {
     /// Draws a single light spot image on the canvas.
     pub(super) fn draw_spot(&mut self, spot_id: SpotId) {
         let spot = &self.spots[spot_id];
 
         // Fast path for dark spots
-        if spot.intensity <= 0.0 {
+        if spot.illumination <= 0.0 || spot.intensity <= 0.0 {
             return;
         }
 
@@ -129,8 +140,11 @@ impl Canvas {
         // FIXME: Do we need to support 10-bit and 12-bit images here?
         let value_scale = Pixel::MAX as f32;
 
+        // The effective spot position coordinates
+        let (posx, posy) = spot.position();
+
         // Current pixel radius vector
-        let rvec = ((x as f32 - spot.position.0), (y as f32 - spot.position.1));
+        let rvec = (((x as f32) - posx), ((y as f32) - posy));
 
         // Radius vector transformation matrix: inverted shape matrix
         let mat = spot.shape_inv;
@@ -149,8 +163,11 @@ impl Canvas {
         // Transparently zero-extend the pattern function LUT to infinity.
         let pattern_val = self.pattern_lut.get(lut_index).copied().unwrap_or(0.0);
 
+        // Calculate the effective peak intensity.
+        let intensity = spot.intensity * spot.illumination * self.brightness;
+
         // Calculate the final pixel value
-        (value_scale * spot.intensity * self.brightness * pattern_val) as Pixel
+        (value_scale * intensity * pattern_val) as Pixel
     }
 }
 
@@ -188,15 +205,19 @@ mod tests {
         let shape = SpotShape::default();
         let shape_inv = shape.invert();
         let position = (7.5, 9.2);
+        let offset = (0.0, 0.0);
         let width = 16;
         let height = 16;
 
         let intensity = 1.0;
+        let illumination = 1.0;
 
         let mut spot = SpotRec {
             position,
+            offset,
             shape,
             intensity,
+            illumination,
             shape_inv,
         };
 
@@ -242,15 +263,19 @@ mod tests {
         let shape_inv = shape.invert();
 
         let position = (7.5, 9.2);
+        let offset = (0.0, 0.0);
         let width = 32;
         let height = 32;
 
         let intensity = 1.0;
+        let illumination = 1.0;
 
         let mut spot = SpotRec {
             position,
+            offset,
             shape,
             intensity,
+            illumination,
             shape_inv,
         };
 

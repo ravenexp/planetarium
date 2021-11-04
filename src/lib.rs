@@ -13,6 +13,9 @@ pub type Pixel = u16;
 /// 2D point coordinates: `(X, Y)`
 pub type Point = (f32, f32);
 
+/// 2D vector coordinates: `(X, Y)`
+pub type Vector = (f32, f32);
+
 /// Spot shape definition matrix
 ///
 /// A unit sized circular spot is scaled
@@ -38,8 +41,14 @@ struct SpotRec {
     /// Ligth spot centroid position
     position: Point,
 
+    /// Relative spot position offset
+    offset: Vector,
+
     /// Relative peak intensity
     intensity: f32,
+
+    /// Illumination based spot intensity factor
+    illumination: f32,
 
     /// Spot shape definition matrix
     shape: SpotShape,
@@ -109,20 +118,46 @@ impl Canvas {
 
     /// Creates a new light spot on the canvas.
     pub fn add_spot(&mut self, position: Point, shape: SpotShape, intensity: f32) -> SpotId {
+        // Initialize with the defaults
+        let offset = (0.0, 0.0);
+        let illumination = 1.0;
+
         // Pre-compute and cache the inverted spot shape matrix
         // used by the rasterizer code.
         let shape_inv = shape.invert();
 
         let spot = SpotRec {
             position,
+            offset,
             shape,
             intensity,
+            illumination,
             shape_inv,
         };
 
         let id = self.spots.len();
         self.spots.push(spot);
         id
+    }
+
+    /// Sets the internal light spot position offset vector.
+    ///
+    /// The position offset vector is added to the immutable spot position
+    /// to calculate the spot rendering coordinates on the canvas.
+    pub fn set_spot_offset(&mut self, spot: SpotId, offset: Vector) {
+        if let Some(s) = self.spots.get_mut(spot) {
+            s.offset = offset;
+        }
+    }
+
+    /// Sets the internal light spot illumination state.
+    ///
+    /// The spot illumination factor is multiplied with the immutable spot
+    /// intensity factor to calculate the rendered peak intensity.
+    pub fn set_spot_illumination(&mut self, spot: SpotId, illumination: f32) {
+        if let Some(s) = self.spots.get_mut(spot) {
+            s.illumination = illumination;
+        }
     }
 
     /// Clears the canvas image (fills with background pixels).
@@ -213,5 +248,23 @@ mod tests {
         c.draw();
 
         assert_eq!(c.pixels()[0], 200);
+    }
+
+    #[test]
+    fn move_spots() {
+        let shape = SpotShape::default();
+        let mut c = Canvas::new(16, 16);
+
+        let spot1 = c.add_spot((1.1, 4.3), shape, 0.5);
+        let spot2 = c.add_spot((4.6, 7.2), shape, 0.4);
+
+        c.set_spot_offset(spot1, (-3.2, 4.2));
+        c.set_spot_illumination(spot2, 1.3);
+
+        // NOP
+        c.set_spot_offset(55, (1.1, 1.2));
+
+        // NOP
+        c.set_spot_illumination(33, 0.0);
     }
 }
