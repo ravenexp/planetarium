@@ -28,6 +28,27 @@ impl SpotShape {
             Self::EFFECTIVE_RADIUS_FACTOR * self.yy.hypot(self.yx),
         )
     }
+
+    /// Inverts the shape definition matrix
+    pub(super) fn invert(&self) -> SpotShape {
+        let det = self.xx * self.yy - self.xy * self.yx;
+
+        // Bail on (almost) singular matrices in debug builds,
+        // fall back to the unit shape in releases.
+        if det.abs() < 0.01 {
+            debug_assert!(false, "Singular shape matrix: {:?}", self);
+            return SpotShape::default();
+        }
+
+        let inv_det = det.recip();
+
+        let xx = inv_det * self.yy;
+        let yy = inv_det * self.xx;
+        let xy = inv_det * -self.xy;
+        let yx = inv_det * -self.yx;
+
+        SpotShape { xx, xy, yx, yy }
+    }
 }
 
 /// Spot bounding box coordinates in pixels
@@ -111,13 +132,15 @@ impl Canvas {
         // Current pixel radius vector
         let rvec = ((x as f32 - spot.position.0), (y as f32 - spot.position.1));
 
-        // Transformed radius vector
-        // TODO: Use matrix multiplication for coordinate transform.
-        //       Invert and cache the shape transform matrix.
-        let tvec = ((rvec.0 / spot.shape.xx), (rvec.1 / spot.shape.yy));
+        // Radius vector transformation matrix: inverted shape matrix
+        let mat = spot.shape_inv;
+
+        // Transformed radius vector components
+        let tx = rvec.0 * mat.xx + rvec.1 * mat.xy;
+        let ty = rvec.1 * mat.yy + rvec.0 * mat.yx;
 
         // Transformed radial distance
-        let rdist = tvec.0.hypot(tvec.1);
+        let rdist = tx.hypot(ty);
 
         // Perform pre-computed spot pattern LUT lookup for each pixel:
 
@@ -163,6 +186,7 @@ mod tests {
     #[test]
     fn calc_bbox() {
         let shape = SpotShape::default();
+        let shape_inv = shape.invert();
         let position = (7.5, 9.2);
         let width = 16;
         let height = 16;
@@ -171,8 +195,9 @@ mod tests {
 
         let mut spot = SpotRec {
             position,
-            intensity,
             shape,
+            intensity,
+            shape_inv,
         };
 
         let bbox = BoundingBox::new(&spot, width, height);
@@ -214,6 +239,7 @@ mod tests {
             yx: 2.5,
             yy: 5.0,
         };
+        let shape_inv = shape.invert();
 
         let position = (7.5, 9.2);
         let width = 32;
@@ -223,8 +249,9 @@ mod tests {
 
         let mut spot = SpotRec {
             position,
-            intensity,
             shape,
+            intensity,
+            shape_inv,
         };
 
         let bbox = BoundingBox::new(&spot, width, height);

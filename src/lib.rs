@@ -43,6 +43,9 @@ struct SpotRec {
 
     /// Spot shape definition matrix
     shape: SpotShape,
+
+    /// Inverted spot shape matrix (cached)
+    shape_inv: SpotShape,
 }
 
 /// Generates the synthesized image containing multiple light spots
@@ -101,10 +104,15 @@ impl Canvas {
 
     /// Creates a new light spot on the canvas.
     pub fn add_spot(&mut self, position: Point, shape: SpotShape, intensity: f32) -> SpotId {
+        // Pre-compute and cache the inverted spot shape matrix
+        // used by the rasterizer code.
+        let shape_inv = shape.invert();
+
         let spot = SpotRec {
             position,
             shape,
             intensity,
+            shape_inv,
         };
 
         let id = self.spots.len();
