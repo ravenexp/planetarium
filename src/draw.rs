@@ -7,8 +7,6 @@
 //! Contains private types and implementations of private methods
 //! for the existing public types.
 
-use std::f32::consts::FRAC_1_SQRT_2;
-
 use super::{Canvas, Pixel, SpotId, SpotRec, SpotShape};
 use crate::pattern::{J1_ZERO1, J1_ZERO2};
 
@@ -21,15 +19,14 @@ impl SpotShape {
     /// the radius of the second Airy disc minumum.
     const EFFECTIVE_RADIUS_FACTOR: f32 = J1_ZERO2 / J1_ZERO1;
 
-    /// Calculates the effective radius of the spot image.
-    fn effective_radius(&self) -> f32 {
-        // FIXME:
-        //   Come up with a better effective radius estimation.
-        //   Linear operator norm looks good, but is difficult to calculate.
-        let norm = FRAC_1_SQRT_2 * self.xx.hypot(self.yy).max(self.xy.hypot(self.yx));
-
-        // Re = F*max(sqrt(a11^2 + a22^2), sqrt(a12^2 + a21^2)) / sqrt(2)
-        Self::EFFECTIVE_RADIUS_FACTOR * norm
+    /// Calculates the effective radius of the spot image
+    /// projected onto the coordinate axes as XY components.
+    fn effective_radius_xy(&self) -> (f32, f32) {
+        // Rx = F*sqrt(a11^2 + a12^2), Ry = F*sqrt(a22^2 + a21^2))
+        (
+            Self::EFFECTIVE_RADIUS_FACTOR * self.xx.hypot(self.xy),
+            Self::EFFECTIVE_RADIUS_FACTOR * self.yy.hypot(self.yx),
+        )
     }
 }
 
@@ -51,14 +48,14 @@ impl BoundingBox {
     ///
     /// Clips to box dimensions to the underlying canvas size.
     fn new(spot: &SpotRec, width: u32, height: u32) -> Self {
-        let re = spot.shape.effective_radius();
+        let (rx, ry) = spot.shape.effective_radius_xy();
         let (px, py) = spot.position;
         let (w, h) = (width as i32, height as i32);
 
-        let x0 = ((px - re).floor() as i32).max(0).min(w) as u32;
-        let y0 = ((py - re).floor() as i32).max(0).min(h) as u32;
-        let x1 = ((px + re).ceil() as i32).max(0).min(w) as u32;
-        let y1 = ((py + re).ceil() as i32).max(0).min(h) as u32;
+        let x0 = ((px - rx).floor() as i32).max(0).min(w) as u32;
+        let y0 = ((py - ry).floor() as i32).max(0).min(h) as u32;
+        let x1 = ((px + rx).ceil() as i32).max(0).min(w) as u32;
+        let y1 = ((py + ry).ceil() as i32).max(0).min(h) as u32;
 
         BoundingBox { x0, y0, x1, y1 }
     }
@@ -143,9 +140,24 @@ mod tests {
         let shape = SpotShape::default();
 
         const RE: f32 = 1.8309;
-        let re = shape.effective_radius();
+        let (rx, ry) = shape.effective_radius_xy();
 
-        assert!((re - RE).abs() < 1e-4, "re = {}, RE = {}", re, RE);
+        assert!((rx - RE).abs() < 1e-4, "rx = {}, RE = {}", rx, RE);
+        assert!((ry - RE).abs() < 1e-4, "ry = {}, RE = {}", ry, RE);
+
+        let shape = SpotShape {
+            xx: 3.0,
+            xy: -1.5,
+            yx: 2.5,
+            yy: 5.0,
+        };
+
+        const RX: f32 = 6.1411;
+        const RY: f32 = 10.2352;
+        let (rx, ry) = shape.effective_radius_xy();
+
+        assert!((rx - RX).abs() < 1e-4, "rx = {}, RX = {}", rx, RX);
+        assert!((ry - RY).abs() < 1e-4, "ry = {}, RY = {}", ry, RY);
     }
 
     #[test]
@@ -192,6 +204,58 @@ mod tests {
         assert_eq!(bbox.x1, 1);
         assert_eq!(bbox.y0, 13);
         assert_eq!(bbox.y1, 16);
+    }
+
+    #[test]
+    fn calc_bbox_rect() {
+        let shape = SpotShape {
+            xx: 3.0,
+            xy: -1.5,
+            yx: 2.5,
+            yy: 5.0,
+        };
+
+        let position = (7.5, 9.2);
+        let width = 32;
+        let height = 32;
+
+        let intensity = 1.0;
+
+        let mut spot = SpotRec {
+            position,
+            intensity,
+            shape,
+        };
+
+        let bbox = BoundingBox::new(&spot, width, height);
+        assert!(!bbox.is_empty());
+        assert_eq!(bbox.x0, 1);
+        assert_eq!(bbox.x1, 14);
+        assert_eq!(bbox.y0, 0);
+        assert_eq!(bbox.y1, 20);
+
+        spot.position = (10.5, 13.3);
+
+        let bbox = BoundingBox::new(&spot, width, height);
+        assert!(!bbox.is_empty());
+        assert_eq!(bbox.x0, 4);
+        assert_eq!(bbox.x1, 17);
+        assert_eq!(bbox.y0, 3);
+        assert_eq!(bbox.y1, 24);
+
+        spot.position = (-15.5, 20.3);
+
+        let bbox = BoundingBox::new(&spot, width, height);
+        assert!(bbox.is_empty());
+
+        spot.position = (-5.0, 15.5);
+
+        let bbox = BoundingBox::new(&spot, width, height);
+        assert!(!bbox.is_empty());
+        assert_eq!(bbox.x0, 0);
+        assert_eq!(bbox.x1, 2);
+        assert_eq!(bbox.y0, 5);
+        assert_eq!(bbox.y1, 26);
     }
 
     #[test]
