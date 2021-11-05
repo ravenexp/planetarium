@@ -12,3 +12,4 @@ readme = "README.md"
 
 [dependencies]
 libm = "0.2"
+png = { version = "0.17", optional = true }
