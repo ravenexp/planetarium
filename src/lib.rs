@@ -95,6 +95,18 @@ impl Default for SpotShape {
     }
 }
 
+impl SpotShape {
+    /// Linearly scales the spot shape by a single scalar factor.
+    pub fn scale(&self, k: f32) -> SpotShape {
+        let xx = k * self.xx;
+        let xy = k * self.xy;
+        let yx = k * self.yx;
+        let yy = k * self.yy;
+
+        SpotShape { xx, xy, yx, yy }
+    }
+}
+
 impl Canvas {
     /// Creates a new clear canvas to render light spots on.
     pub fn new(width: u32, height: u32) -> Self {
@@ -266,5 +278,40 @@ mod tests {
 
         // NOP
         c.set_spot_illumination(33, 0.0);
+    }
+
+    #[test]
+    fn draw_spots() {
+        let shape = SpotShape::default().scale(2.5);
+        let mut c = Canvas::new(32, 32);
+
+        let spot1 = c.add_spot((1.1, 4.3), shape, 0.5);
+        let spot2 = c.add_spot((4.6, 7.2), shape, 0.9);
+        let spot3 = c.add_spot((17.3, 25.8), shape, 1.2);
+        let spot4 = c.add_spot((30.6, 10.1), shape, 0.7);
+
+        c.set_background(1000);
+        c.draw();
+
+        assert_eq!(c.pixels()[32 * 4 + 1], 31823);
+        assert_eq!(c.pixels()[32 * 7 + 5], 53389);
+        assert_eq!(c.pixels()[32 * 26 + 17], 65535);
+        assert_eq!(c.pixels()[32 * 10 + 30], 37774);
+
+        c.set_spot_offset(spot3, (-13.2, 6.2));
+
+        for s in [spot1, spot2, spot3, spot4] {
+            c.set_spot_illumination(s, 1.5);
+        }
+
+        c.draw();
+
+        assert_eq!(c.pixels()[32 * 4 + 1], 47235);
+        assert_eq!(c.pixels()[32 * 7 + 5], 65535);
+        assert_eq!(c.pixels()[32 * 26 + 17], 1000);
+        assert_eq!(c.pixels()[32 * 10 + 30], 56161);
+
+        // new spot3 location
+        assert_eq!(c.pixels()[32 * 31 + 3], 28020);
     }
 }

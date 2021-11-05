@@ -7,7 +7,7 @@
 //! Contains private types and implementations of private methods
 //! for the existing public types.
 
-use super::{Canvas, Pixel, Point, SpotId, SpotRec, SpotShape};
+use super::{Canvas, Pixel, Point, SpotId, SpotRec, SpotShape, Vector};
 use crate::pattern::{J1_ZERO1, J1_ZERO2};
 
 impl SpotShape {
@@ -29,7 +29,9 @@ impl SpotShape {
         )
     }
 
-    /// Inverts the shape definition matrix
+    /// Inverts the shape definition matrix.
+    ///
+    /// Returns the inverted matrix.
     pub(super) fn invert(&self) -> SpotShape {
         let det = self.xx * self.yy - self.xy * self.yx;
 
@@ -48,6 +50,16 @@ impl SpotShape {
         let yx = inv_det * -self.yx;
 
         SpotShape { xx, xy, yx, yy }
+    }
+
+    /// Transforms a 2D vector using the shape definition matrix.
+    ///
+    /// Returns the transformed vector.
+    fn apply(&self, vec: Vector) -> Vector {
+        let x = vec.0 * self.xx + vec.1 * self.xy;
+        let y = vec.1 * self.yy + vec.0 * self.yx;
+
+        (x, y)
     }
 }
 
@@ -146,12 +158,8 @@ impl Canvas {
         // Current pixel radius vector
         let rvec = (((x as f32) - posx), ((y as f32) - posy));
 
-        // Radius vector transformation matrix: inverted shape matrix
-        let mat = spot.shape_inv;
-
         // Transformed radius vector components
-        let tx = rvec.0 * mat.xx + rvec.1 * mat.xy;
-        let ty = rvec.1 * mat.yy + rvec.0 * mat.yx;
+        let (tx, ty) = spot.shape_inv.apply(rvec);
 
         // Transformed radial distance
         let rdist = tx.hypot(ty);
