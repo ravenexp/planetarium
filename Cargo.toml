@@ -10,8 +10,5 @@ keywords = ["astronomy", "simulation"]
 categories = ["graphics", "science"]
 readme = "README.md"
 
-[lib]
-doctest = false
-
 [dependencies]
 libm = "0.2"
