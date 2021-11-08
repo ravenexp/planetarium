@@ -49,6 +49,8 @@ mod pattern;
 #[cfg(feature = "png")]
 mod png;
 
+use crate::gamma::GammaCurve8;
+
 /// Image pixel value type: 16-bit pixels
 pub type Pixel = u16;
 
@@ -124,6 +126,9 @@ pub struct Canvas {
 
     /// Pattern LUT index scaling factor
     pattern_scale: f32,
+
+    /// sRBG compression gamma curve LUT
+    gamma_curve: GammaCurve8,
 }
 
 /// Exportable canvas image formats
@@ -189,6 +194,7 @@ impl Canvas {
         let brightness = 1.0;
         let pixbuf = vec![0; (width * height) as usize];
         let (pattern_lut, pattern_scale) = Self::build_pattern_lut();
+        let gamma_curve = GammaCurve8::new();
 
         Canvas {
             width,
@@ -199,6 +205,7 @@ impl Canvas {
             pixbuf,
             pattern_lut,
             pattern_scale,
+            gamma_curve,
         }
     }
 

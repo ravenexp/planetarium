@@ -10,6 +10,9 @@ keywords = ["astronomy", "simulation"]
 categories = ["graphics", "science"]
 readme = "README.md"
 
+[features]
+default = ["png"]
+
 [dependencies]
 libm = "0.2"
 png = { version = "0.17", optional = true }
