@@ -42,6 +42,8 @@
 //! ```
 
 mod draw;
+#[allow(dead_code)]
+mod gamma;
 mod pattern;
 
 #[cfg(feature = "png")]
