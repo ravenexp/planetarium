@@ -40,6 +40,30 @@
 //! let (image_width, image_height) = c.dimensions();
 //! let val_x_y = image_pixbuf[(y * image_width + x) as usize];
 //! ```
+//!
+//! Canvas image export
+//! -------------------
+//!
+//! The `Canvas` object supports image export to RAW and PNG file formats.
+//! Both 8-bit and 16-bit PNG sample formats are supported.
+//! Export to PNG formats requires the default `png` feature to be enabled.
+//!
+//! ### Example PNG export code
+//!
+//! ```
+//! use planetarium::{Canvas, ImageFormat};
+//!
+//! let mut c = Canvas::new(256, 256);
+//! c.clear();
+//!
+//! #[cfg(features = "png")]
+//! // Export to a 8-bit gamma-compressed grayscale PNG image.
+//! let png_8bpp_bytes = c.export_image(ImageFormat::PngGamma8Bpp).unwrap();
+//!
+//! #[cfg(features = "png")]
+//! // Export to a 16-bit linear light grayscale PNG image.
+//! let png_16bpp_bytes = c.export_image(ImageFormat::PngLinear16Bpp).unwrap();
+//! ```
 
 mod draw;
 #[allow(dead_code)]
@@ -128,13 +152,17 @@ pub struct Canvas {
     pattern_scale: f32,
 
     /// sRBG compression gamma curve LUT
+    #[allow(dead_code)]
     gamma_curve: GammaCurve8,
 }
 
 /// Exportable canvas image formats
 #[derive(Debug, Clone, Copy)]
+#[non_exhaustive]
 pub enum ImageFormat {
     // Internal encoders:
+    /// 8-bit gamma-compressed grayscale RAW
+    RawGamma8Bpp,
     /// 10-bit linear light grayscale little-endian RAW
     RawLinear10BppLE,
     /// 12-bit linear light grayscale little-endian RAW
