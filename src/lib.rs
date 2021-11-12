@@ -74,6 +74,7 @@ mod pattern;
 mod png;
 
 use crate::gamma::GammaCurve8;
+use crate::pattern::AiryPattern;
 
 /// Image pixel value type: 16-bit pixels
 pub type Pixel = u16;
@@ -146,10 +147,7 @@ pub struct Canvas {
     pixbuf: Vec<Pixel>,
 
     /// Spot pattern lookup table
-    pattern_lut: Vec<f32>,
-
-    /// Pattern LUT index scaling factor
-    pattern_scale: f32,
+    pattern: AiryPattern,
 
     /// sRBG compression gamma curve LUT
     #[allow(dead_code)]
@@ -221,7 +219,7 @@ impl Canvas {
         let spots = Vec::with_capacity(8);
         let brightness = 1.0;
         let pixbuf = vec![0; (width * height) as usize];
-        let (pattern_lut, pattern_scale) = Self::build_pattern_lut();
+        let pattern = AiryPattern::new();
         let gamma_curve = GammaCurve8::new();
 
         Canvas {
@@ -231,8 +229,7 @@ impl Canvas {
             spots,
             brightness,
             pixbuf,
-            pattern_lut,
-            pattern_scale,
+            pattern,
             gamma_curve,
         }
     }

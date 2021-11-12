@@ -8,24 +8,16 @@
 //! for the existing public types.
 
 use super::{Canvas, Pixel, Point, SpotId, SpotRec, SpotShape, Vector};
-use crate::pattern::{J1_ZERO1, J1_ZERO2};
+use crate::pattern::AiryPattern;
 
 impl SpotShape {
-    /// Fudge factor for the effective spot radius estimation
-    ///
-    /// The unit radius is the radius of the Airy disc at the first minumum,
-    /// also known as the diffraction radius.
-    /// The effective (rasterized) spot radius is arbitrarily chosen as
-    /// the radius of the second Airy disc minumum.
-    const EFFECTIVE_RADIUS_FACTOR: f32 = J1_ZERO2 / J1_ZERO1;
-
     /// Calculates the effective radius of the spot image
     /// projected onto the coordinate axes as XY components.
     fn effective_radius_xy(&self) -> (f32, f32) {
         // Rx = F*sqrt(a11^2 + a12^2), Ry = F*sqrt(a22^2 + a21^2))
         (
-            Self::EFFECTIVE_RADIUS_FACTOR * self.xx.hypot(self.xy),
-            Self::EFFECTIVE_RADIUS_FACTOR * self.yy.hypot(self.yx),
+            AiryPattern::SIZE_FACTOR * self.xx.hypot(self.xy),
+            AiryPattern::SIZE_FACTOR * self.yy.hypot(self.yx),
         )
     }
 
@@ -164,12 +156,8 @@ impl Canvas {
         // Transformed radial distance
         let rdist = tx.hypot(ty);
 
-        // Perform pre-computed spot pattern LUT lookup for each pixel:
-
-        // Calculate the LUT index with rounding to the nearest integer.
-        let lut_index = (rdist * self.pattern_scale + 0.5) as usize;
-        // Transparently zero-extend the pattern function LUT to infinity.
-        let pattern_val = self.pattern_lut.get(lut_index).copied().unwrap_or(0.0);
+        // Perform pre-computed spot pattern LUT lookup for each pixel.
+        let pattern_val = self.pattern.eval(rdist);
 
         // Calculate the effective peak intensity.
         let intensity = spot.intensity * spot.illumination * self.brightness;
