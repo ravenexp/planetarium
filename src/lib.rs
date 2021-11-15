@@ -258,6 +258,28 @@ impl Canvas {
         id
     }
 
+    /// Calculates the canvas coordinates of the light spot.
+    ///
+    /// The canvas coordinates are calculated as the immutable spot position coordinates
+    /// shifted by the variable spot offset vector and transformed using the canvas
+    /// world transform.
+    pub fn spot_position(&self, spot: SpotId) -> Option<Point> {
+        self.spots
+            .get(spot)
+            .map(|s| ((s.position.0 + s.offset.0), (s.position.1 + s.offset.1)))
+    }
+
+    /// Calculates the effective peak intensity of the light spot.
+    ///
+    /// The effective peak intensity is calculated as the product of the immutable spot
+    /// intensity factor, the variable spot illumination factor
+    /// and the global brightness level.
+    pub fn spot_intensity(&self, spot: SpotId) -> Option<f32> {
+        self.spots
+            .get(spot)
+            .map(|s| s.intensity * s.illumination * self.brightness)
+    }
+
     /// Sets the internal light spot position offset vector.
     ///
     /// The position offset vector is added to the immutable spot position
@@ -392,8 +414,14 @@ mod tests {
         let spot1 = c.add_spot((1.1, 4.3), shape, 0.5);
         let spot2 = c.add_spot((4.6, 7.2), shape, 0.4);
 
+        assert_eq!(c.spot_position(spot1), Some((1.1, 4.3)));
+        assert_eq!(c.spot_intensity(spot2), Some(0.4));
+
         c.set_spot_offset(spot1, (-3.2, 4.2));
         c.set_spot_illumination(spot2, 1.3);
+
+        assert_eq!(c.spot_position(spot1), Some((1.1 - 3.2, 4.3 + 4.2)));
+        assert_eq!(c.spot_intensity(spot2), Some(0.4 * 1.3));
 
         // NOP
         c.set_spot_offset(55, (1.1, 1.2));
