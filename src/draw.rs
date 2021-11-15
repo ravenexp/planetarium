@@ -7,7 +7,7 @@
 //! Contains private types and implementations of private methods
 //! for the existing public types.
 
-use super::{Canvas, Pixel, Point, SpotId, SpotRec, SpotShape, Vector};
+use super::{Canvas, Pixel, Point, SpotId, SpotShape, Vector};
 use crate::pattern::AiryPattern;
 
 impl SpotShape {
@@ -69,12 +69,12 @@ struct BoundingBox {
 }
 
 impl BoundingBox {
-    /// Calculates the bounding box for a light spot.
+    /// Calculates the bounding box for a light spot from its shape and position.
     ///
     /// Clips to box dimensions to the underlying canvas size.
-    fn new(spot: &SpotRec, width: u32, height: u32) -> Self {
-        let (rx, ry) = spot.shape.effective_radius_xy();
-        let (px, py) = spot.position();
+    fn new(position: Point, shape: &SpotShape, width: u32, height: u32) -> Self {
+        let (rx, ry) = shape.effective_radius_xy();
+        let (px, py) = position;
         let (w, h) = (width as i32, height as i32);
 
         let x0 = ((px - rx).floor() as i32).max(0).min(w) as u32;
@@ -91,28 +91,21 @@ impl BoundingBox {
     }
 }
 
-impl SpotRec {
-    /// Calculates the effective spot position by taking into account
-    /// the associated position offset vector.
-    fn position(&self) -> Point {
-        (
-            (self.position.0 + self.offset.0),
-            (self.position.1 + self.offset.1),
-        )
-    }
-}
-
 impl Canvas {
     /// Draws a single light spot image on the canvas.
     pub(super) fn draw_spot(&mut self, spot_id: SpotId) {
-        let spot = &self.spots[spot_id];
+        let position = self.spot_position(spot_id).unwrap();
+        let intensity = self.spot_intensity(spot_id).unwrap();
+
+        let shape = self.spots[spot_id].shape;
+        let shape_inv = self.spots[spot_id].shape_inv;
 
         // Fast path for dark spots
-        if spot.illumination <= 0.0 || spot.intensity <= 0.0 {
+        if intensity <= 0.0 {
             return;
         }
 
-        let bbox = BoundingBox::new(spot, self.width, self.height);
+        let bbox = BoundingBox::new(position, &shape, self.width, self.height);
 
         // Check is the spot is clipped out of the canvas.
         if bbox.is_empty() {
@@ -125,7 +118,7 @@ impl Canvas {
             for j in bbox.x0..bbox.x1 {
                 let poff = loff + j as usize;
 
-                let pixval = self.eval_spot_pixel(spot, j, i);
+                let pixval = self.eval_spot_pixel(position, &shape_inv, intensity, j, i);
 
                 // Compose light spot patterns using linear intesity addition
                 // with numeric saturation instead of wrapping overflow.
@@ -139,19 +132,19 @@ impl Canvas {
     ///
     /// This version calculates a unit Airy disk pattern deformed
     /// by the `SpotShape` transformation matrix.
-    fn eval_spot_pixel(&self, spot: &SpotRec, x: u32, y: u32) -> Pixel {
-        // Image pixel intensity range
-        // FIXME: Do we need to support 10-bit and 12-bit images here?
-        let value_scale = Pixel::MAX as f32;
-
-        // The effective spot position coordinates
-        let (posx, posy) = spot.position();
-
+    fn eval_spot_pixel(
+        &self,
+        center: Point,
+        shape_inv: &SpotShape,
+        intensity: f32,
+        x: u32,
+        y: u32,
+    ) -> Pixel {
         // Current pixel radius vector
-        let rvec = (((x as f32) - posx), ((y as f32) - posy));
+        let rvec = (((x as f32) - center.0), ((y as f32) - center.1));
 
         // Transformed radius vector components
-        let (tx, ty) = spot.shape_inv.apply(rvec);
+        let (tx, ty) = shape_inv.apply(rvec);
 
         // Transformed radial distance
         let rdist = tx.hypot(ty);
@@ -159,11 +152,8 @@ impl Canvas {
         // Perform pre-computed spot pattern LUT lookup for each pixel.
         let pattern_val = self.pattern.eval(rdist);
 
-        // Calculate the effective peak intensity.
-        let intensity = spot.intensity * spot.illumination * self.brightness;
-
         // Calculate the final pixel value
-        (value_scale * intensity * pattern_val) as Pixel
+        (intensity * pattern_val * (Pixel::MAX as f32)) as Pixel
     }
 }
 
@@ -199,48 +189,34 @@ mod tests {
     #[test]
     fn calc_bbox() {
         let shape = SpotShape::default();
-        let shape_inv = shape.invert();
-        let position = (7.5, 9.2);
-        let offset = (0.0, 0.0);
+        let mut position = (7.5, 9.2);
         let width = 16;
         let height = 16;
 
-        let intensity = 1.0;
-        let illumination = 1.0;
-
-        let mut spot = SpotRec {
-            position,
-            offset,
-            shape,
-            intensity,
-            illumination,
-            shape_inv,
-        };
-
-        let bbox = BoundingBox::new(&spot, width, height);
+        let bbox = BoundingBox::new(position, &shape, width, height);
         assert!(!bbox.is_empty());
         assert_eq!(bbox.x0, 5);
         assert_eq!(bbox.x1, 10);
         assert_eq!(bbox.y0, 7);
         assert_eq!(bbox.y1, 12);
 
-        spot.position = (10.5, 13.3);
+        position = (10.5, 13.3);
 
-        let bbox = BoundingBox::new(&spot, width, height);
+        let bbox = BoundingBox::new(position, &shape, width, height);
         assert!(!bbox.is_empty());
         assert_eq!(bbox.x0, 8);
         assert_eq!(bbox.x1, 13);
         assert_eq!(bbox.y0, 11);
         assert_eq!(bbox.y1, 16);
 
-        spot.position = (-5.5, 20.3);
+        position = (-5.5, 20.3);
 
-        let bbox = BoundingBox::new(&spot, width, height);
+        let bbox = BoundingBox::new(position, &shape, width, height);
         assert!(bbox.is_empty());
 
-        spot.position = (-1.0, 15.5);
+        position = (-1.0, 15.5);
 
-        let bbox = BoundingBox::new(&spot, width, height);
+        let bbox = BoundingBox::new(position, &shape, width, height);
         assert!(!bbox.is_empty());
         assert_eq!(bbox.x0, 0);
         assert_eq!(bbox.x1, 1);
@@ -256,49 +232,35 @@ mod tests {
             yx: 2.5,
             yy: 5.0,
         };
-        let shape_inv = shape.invert();
 
-        let position = (7.5, 9.2);
-        let offset = (0.0, 0.0);
+        let mut position = (7.5, 9.2);
         let width = 32;
         let height = 32;
 
-        let intensity = 1.0;
-        let illumination = 1.0;
-
-        let mut spot = SpotRec {
-            position,
-            offset,
-            shape,
-            intensity,
-            illumination,
-            shape_inv,
-        };
-
-        let bbox = BoundingBox::new(&spot, width, height);
+        let bbox = BoundingBox::new(position, &shape, width, height);
         assert!(!bbox.is_empty());
         assert_eq!(bbox.x0, 1);
         assert_eq!(bbox.x1, 14);
         assert_eq!(bbox.y0, 0);
         assert_eq!(bbox.y1, 20);
 
-        spot.position = (10.5, 13.3);
+        position = (10.5, 13.3);
 
-        let bbox = BoundingBox::new(&spot, width, height);
+        let bbox = BoundingBox::new(position, &shape, width, height);
         assert!(!bbox.is_empty());
         assert_eq!(bbox.x0, 4);
         assert_eq!(bbox.x1, 17);
         assert_eq!(bbox.y0, 3);
         assert_eq!(bbox.y1, 24);
 
-        spot.position = (-15.5, 20.3);
+        position = (-15.5, 20.3);
 
-        let bbox = BoundingBox::new(&spot, width, height);
+        let bbox = BoundingBox::new(position, &shape, width, height);
         assert!(bbox.is_empty());
 
-        spot.position = (-5.0, 15.5);
+        position = (-5.0, 15.5);
 
-        let bbox = BoundingBox::new(&spot, width, height);
+        let bbox = BoundingBox::new(position, &shape, width, height);
         assert!(!bbox.is_empty());
         assert_eq!(bbox.x0, 0);
         assert_eq!(bbox.x1, 2);
