@@ -91,12 +91,34 @@
 //! Both 8-bit and 16-bit PNG sample formats are supported.
 //! Export to PNG formats requires the default `png` feature to be enabled.
 //!
+//! ### Example RAW image export code
+//!
+//! ```
+//! use planetarium::{Canvas, ImageFormat};
+//!
+//! let mut c = Canvas::new(256, 256);
+//!
+//! c.set_background(1000);
+//! c.clear();
+//!
+//! // Export to a 8-bit gamma-compressed grayscale RAW image.
+//! let raw_8bpp_bytes = c.export_image(ImageFormat::RawGamma8Bpp).unwrap();
+//!
+//! // Export to a 10-bit linear light grayscale little-endian RAW image.
+//! let raw_10bpp_bytes = c.export_image(ImageFormat::RawLinear10BppLE).unwrap();
+//!
+//! // Export to a 12-bit gamma-compressed grayscale little-endian RAW image.
+//! let raw_12bpp_bytes = c.export_image(ImageFormat::RawLinear12BppLE).unwrap();
+//! ```
+//!
 //! ### Example PNG export code
 //!
 //! ```
 //! use planetarium::{Canvas, ImageFormat};
 //!
 //! let mut c = Canvas::new(256, 256);
+//!
+//! c.set_background(1000);
 //! c.clear();
 //!
 //! #[cfg(features = "png")]
@@ -109,9 +131,9 @@
 //! ```
 
 mod draw;
-#[allow(dead_code)]
 mod gamma;
 mod pattern;
+mod raw;
 
 #[cfg(feature = "png")]
 mod png;
@@ -193,7 +215,6 @@ pub struct Canvas {
     pattern: AiryPattern,
 
     /// sRBG compression gamma curve LUT
-    #[allow(dead_code)]
     gamma_curve: GammaCurve8,
 }
 
@@ -217,7 +238,8 @@ pub enum ImageFormat {
 }
 
 /// Image export encoder error type
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum EncoderError {
     /// Requested image format not supported
     NotImplemented,
@@ -385,17 +407,24 @@ impl Canvas {
 
     /// Exports the canvas contents in the requested image format.
     #[cfg(not(feature = "png"))]
-    pub fn export_image(&self, _format: ImageFormat) -> Result<Vec<u8>, EncoderError> {
-        Err(EncoderError::NotImplemented)
+    pub fn export_image(&self, format: ImageFormat) -> Result<Vec<u8>, EncoderError> {
+        match format {
+            ImageFormat::RawGamma8Bpp => self.export_raw8bpp(),
+            ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(),
+            ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(),
+            _ => Err(EncoderError::NotImplemented),
+        }
     }
 
     /// Exports the canvas contents in the requested image format.
     #[cfg(feature = "png")]
     pub fn export_image(&self, format: ImageFormat) -> Result<Vec<u8>, EncoderError> {
         match format {
+            ImageFormat::RawGamma8Bpp => self.export_raw8bpp(),
+            ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(),
+            ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(),
             ImageFormat::PngGamma8Bpp => self.export_png8bpp(),
             ImageFormat::PngLinear16Bpp => self.export_png16bpp(),
-            _ => Err(EncoderError::NotImplemented),
         }
     }
 }
