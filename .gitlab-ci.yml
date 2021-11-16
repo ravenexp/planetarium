@@ -1,0 +1,79 @@
+variables:
+    CARGO_HOME: "${CI_PROJECT_DIR}/cargo"
+    RELEASE_NAME: "${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}-g${CI_COMMIT_SHORT_SHA}-b${CI_PIPELINE_ID}"
+    SITE_DIR: "doc"
+
+default:
+    tags:
+      - linux-docker
+
+image: ${PLG_CI_DOCKER_TAG}/rusty-python:latest
+
+stages:
+  - check
+  - build
+  - test
+  - deploy
+
+cache:
+    key:
+        files:
+          - Cargo.toml
+    paths:
+      - cargo
+
+prefetch:
+    stage: .pre
+    script:
+      - mkdir -p .cargo
+      - echo "[source.crates-io]" > .cargo/config
+      - echo registry = \""${PLG_CI_CRATES_IO_MIRROR_INDEX}"\" >> .cargo/config
+      - cargo fetch
+    artifacts:
+        paths:
+          - .cargo
+
+fmt:
+    stage: check
+    script:
+      - cargo fmt -- --check
+
+clippy:
+    stage: check
+    script:
+      - cargo clippy
+
+compile:
+    stage: build
+    script:
+      - cargo build
+
+docs:
+    stage: build
+    script:
+      - cargo doc
+      - cp -r target/doc html
+    artifacts:
+        name: "${RELEASE_NAME}-docs"
+        paths:
+          - html
+
+package:
+    stage: build
+    script:
+      - cargo package
+      - cp -r target/package .
+    artifacts:
+        name: "${RELEASE_NAME}-package"
+        paths:
+          - package
+
+runtests:
+    stage: test
+    script:
+      - cargo test
+
+include:
+  - project: 'devops/support'
+    ref: master
+    file: 'includes/artifacts/deploy-site.yml'
