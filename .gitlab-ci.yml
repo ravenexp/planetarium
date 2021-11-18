@@ -42,11 +42,15 @@ clippy:
     stage: check
     script:
       - cargo clippy
+      - cargo clippy --no-default-features
+      - cargo clippy --tests
+      - cargo clippy --tests --no-default-features
 
 compile:
     stage: build
     script:
       - cargo build
+      - cargo build --no-default-features
 
 docs:
     stage: build
