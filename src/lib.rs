@@ -59,12 +59,15 @@
 //!
 //! // Define an elliptic spot shape with diffraction radii of 2.5 x 1.5 pixels
 //! // rotated by 45 degrees counter-clockwise.
-//! let shape = SpotShape::default().stretch(2.5, 1.5).rotate(45.0);
+//! let shape1 = SpotShape::default().stretch(2.5, 1.5).rotate(45.0);
+//!
+//! // Define an elliptic spot shape by a 2x2 linear transform matrix.
+//! let shape2 = SpotShape::from([[2.0, -0.5], [1.5, 3.0]]);
 //!
 //! // Add some spots at random positions with varying shape size
 //! // and peak intensity.
-//! let spot1 = c.add_spot((100.3, 130.8), shape, 0.5);
-//! let spot2 = c.add_spot((80.6, 200.2), shape.scale(0.5), 0.9);
+//! let spot1 = c.add_spot((100.3, 130.8), shape1, 0.5);
+//! let spot2 = c.add_spot((80.6, 200.2), shape2, 0.9);
 //!
 //! // Shift the rendered spot positions by applying the relative offset vectors.
 //! // The intrinsic spot position coordinates are immutable.
@@ -151,6 +154,9 @@ pub type Point = (f32, f32);
 /// 2D vector coordinates: `(X, Y)`
 pub type Vector = (f32, f32);
 
+/// 2x2 matrix: `[[a11, a12], [a21, a22]]`
+pub type Matrix = [[f32; 2]; 2];
+
 /// Spot shape definition matrix
 ///
 /// A unit sized circular spot is scaled
@@ -170,6 +176,21 @@ pub type Vector = (f32, f32);
 ///
 /// // Stretch by 1.5 in the X direction and rotate clockwise by 45 degrees.
 /// let s3 = s2.stretch(1.5, 1.0).rotate(-45.0);
+/// ```
+///
+/// Conversions
+/// -----------
+///
+/// ```
+/// # use planetarium::SpotShape;
+/// // From a scalar size factor
+/// let s1 = SpotShape::from(2.0);
+///
+/// // From X-direction and Y-direction sizes
+/// let s2 = SpotShape::from((2.0, 1.5));
+///
+/// // From a 2x2 linear coordinate transform matrix
+/// let s3 = SpotShape::from([[1.5, -0.5], [0.5, 2.5]]);
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct SpotShape {
@@ -269,6 +290,29 @@ impl Default for SpotShape {
             xy: 0.0,
             yx: 0.0,
             yy: 1.0,
+        }
+    }
+}
+
+impl From<f32> for SpotShape {
+    fn from(size: f32) -> Self {
+        Self::default().scale(size)
+    }
+}
+
+impl From<(f32, f32)> for SpotShape {
+    fn from(kxy: (f32, f32)) -> Self {
+        Self::default().stretch(kxy.0, kxy.1)
+    }
+}
+
+impl From<Matrix> for SpotShape {
+    fn from(mat: Matrix) -> Self {
+        SpotShape {
+            xx: mat[0][0],
+            xy: mat[0][1],
+            yx: mat[1][0],
+            yy: mat[1][1],
         }
     }
 }
@@ -516,6 +560,21 @@ mod tests {
         assert!((s4.xy - (-6.0)).abs() < 1e-4, "xy = {}", s4.xy);
         assert!((s4.yx - 4.0).abs() < 1e-4, "yx = {}", s4.yx);
         assert!(s4.yy.abs() < 1e-4, "yy = {}", s4.yy);
+    }
+
+    #[test]
+    fn convert_shapes() {
+        let s1 = SpotShape::from(1.0);
+        assert_eq!(s1.to_string(), "[[1, 0], [0, 1]]");
+
+        let s2: SpotShape = 2.0.into();
+        assert_eq!(s2.to_string(), "[[2, 0], [0, 2]]");
+
+        let s3 = SpotShape::from((2.0, 3.0)).scale(2.0);
+        assert_eq!(s3.to_string(), "[[4, 0], [0, 6]]");
+
+        let s4 = SpotShape::from([[1.0, 2.0], [3.0, 4.0]]);
+        assert_eq!(s4.to_string(), "[[1, 2], [3, 4]]");
     }
 
     #[test]
