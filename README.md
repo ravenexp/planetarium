@@ -51,7 +51,12 @@ The spot position coordinates can be changed by adding an offset vector
 and the peak intensity can be adjusted by multiplying with a spot
 illumination factor.
 
+It is possible to define a custom world coordinates to canvas coordinates
+transformation, which affects all light spots.
+
 ```rust
+use planetarium::{Canvas, SpotShape, Transform};
+
 // Draw on a square 256x256 pixel canvas.
 let mut c = Canvas::new(256, 256);
 
@@ -84,6 +89,14 @@ let pos2 = c.spot_position(spot2).unwrap();
 // Query the resulting peak spot intensities.
 let int1 = c.spot_intensity(spot1).unwrap();
 let int2 = c.spot_intensity(spot2).unwrap();
+
+// Apply a custom world coordinates to canvas coordinates transformation.
+c.set_view_transform(Transform::default().translate((13.7, -20.3)));
+
+// Query the resulting spot coordinates on the canvas after
+// the view coordinate transformation.
+let pos1x = c.spot_position(spot1).unwrap();
+let pos2x = c.spot_position(spot2).unwrap();
 ```
 
 Canvas image export

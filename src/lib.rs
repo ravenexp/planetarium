@@ -51,8 +51,11 @@
 //! and the peak intensity can be adjusted by multiplying with a spot
 //! illumination factor.
 //!
+//! It is possible to define a custom world coordinates to canvas coordinates
+//! transformation, which affects all spots.
+//!
 //! ```
-//! use planetarium::{Canvas, SpotShape};
+//! use planetarium::{Canvas, SpotShape, Transform};
 //!
 //! // Draw on a square 256x256 pixel canvas.
 //! let mut c = Canvas::new(256, 256);
@@ -86,6 +89,14 @@
 //! // Query the resulting peak spot intensities.
 //! assert_eq!(c.spot_intensity(spot1), Some(0.5 * 1.2));
 //! assert_eq!(c.spot_intensity(spot2), Some(0.9 * 0.7));
+//!
+//! // Apply a custom world coordinates to canvas coordinates transformation.
+//! c.set_view_transform(Transform::default().translate((13.7, -20.3)));
+//!
+//! // Query the resulting spot coordinates on the canvas after
+//! // the view coordinate transformation.
+//! assert_eq!(c.spot_position(spot1), Some((100.3 - 34.2 + 13.7, 130.8 + 12.6 - 20.3)));
+//! assert_eq!(c.spot_position(spot2), Some((80.6 + 114.2 + 13.7, 200.2 - 73.3 - 20.3)));
 //! ```
 //!
 //! Canvas image export
@@ -204,6 +215,27 @@ pub struct SpotShape {
     pub yy: f32,
 }
 
+/// 2D affine transformation definition matrix
+///
+/// Contains a 2x3 linear transform matrix to be applied
+/// to homogenous coordinates internally.
+#[derive(Debug, Clone, Copy)]
+pub struct Transform {
+    /// a11 - X scale
+    pub xx: f32,
+    /// a12 - XY shear
+    pub xy: f32,
+    /// a21 - YX shear
+    pub yx: f32,
+    /// a22 - Y scale
+    pub yy: f32,
+
+    /// a13 - X translation
+    pub tx: f32,
+    /// a23 - Y translation
+    pub ty: f32,
+}
+
 /// Light spot descriptor type
 pub type SpotId = usize;
 
@@ -242,6 +274,9 @@ pub struct Canvas {
 
     /// Light spot draw list
     spots: Vec<SpotRec>,
+
+    /// View transform matrix
+    transform: Transform,
 
     /// Global spot brightness factor
     brightness: f32,
@@ -327,6 +362,19 @@ impl std::fmt::Display for SpotShape {
     }
 }
 
+impl Default for Transform {
+    fn default() -> Self {
+        Transform {
+            xx: 1.0,
+            xy: 0.0,
+            yx: 0.0,
+            yy: 1.0,
+            tx: 0.0,
+            ty: 0.0,
+        }
+    }
+}
+
 impl std::fmt::Display for EncoderError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         // FIXME: Put full length error descriptions here.
@@ -372,11 +420,32 @@ impl SpotShape {
     }
 }
 
+impl Transform {
+    /// Linearly translates the output coordinates by a shift vector.
+    pub fn translate(&self, shift: Vector) -> Transform {
+        let mut transform = *self;
+
+        transform.tx += shift.0;
+        transform.ty += shift.1;
+
+        transform
+    }
+
+    /// Transforms 2D point coordinates using the affine transformation matrix.
+    fn apply(&self, p: Point) -> Point {
+        let x = p.0 * self.xx + p.1 * self.xy + self.tx;
+        let y = p.1 * self.yy + p.0 * self.yx + self.ty;
+
+        (x, y)
+    }
+}
+
 impl Canvas {
     /// Creates a new clear canvas to render light spots on.
     pub fn new(width: u32, height: u32) -> Self {
         let background = 0;
         let spots = Vec::with_capacity(8);
+        let transform = Transform::default();
         let brightness = 1.0;
         let pixbuf = vec![0; (width * height) as usize];
         let pattern = AiryPattern::new();
@@ -387,6 +456,7 @@ impl Canvas {
             height,
             background,
             spots,
+            transform,
             brightness,
             pixbuf,
             pattern,
@@ -421,12 +491,15 @@ impl Canvas {
     /// Calculates the canvas coordinates of the light spot.
     ///
     /// The canvas coordinates are calculated as the immutable spot position coordinates
-    /// shifted by the variable spot offset vector and transformed using the canvas
-    /// world transform.
+    /// shifted by the variable spot offset vector and transformed using the view
+    /// coordinate transformation.
     pub fn spot_position(&self, spot: SpotId) -> Option<Point> {
-        self.spots
-            .get(spot)
-            .map(|s| ((s.position.0 + s.offset.0), (s.position.1 + s.offset.1)))
+        let view_transform = |s: &SpotRec| {
+            let world_pos = ((s.position.0 + s.offset.0), (s.position.1 + s.offset.1));
+            self.transform.apply(world_pos)
+        };
+
+        self.spots.get(spot).map(view_transform)
     }
 
     /// Calculates the effective peak intensity of the light spot.
@@ -493,6 +566,13 @@ impl Canvas {
     /// Sets the background light level (dark pixel value).
     pub fn set_background(&mut self, level: Pixel) {
         self.background = level;
+    }
+
+    /// Sets the world coordinates to canvas coordinates transformation.
+    ///
+    /// The light spot coordinates are defined in the world coordinate system only.
+    pub fn set_view_transform(&mut self, transform: Transform) {
+        self.transform = transform;
     }
 
     /// Sets the global brightness level (light spot intensity adjustment).
@@ -628,6 +708,23 @@ mod tests {
 
         // NOP
         c.set_spot_illumination(33, 0.0);
+    }
+
+    #[test]
+    fn view_transform() {
+        let shape = SpotShape::default();
+        let mut c = Canvas::new(16, 16);
+
+        let spot1 = c.add_spot((1.1, 4.3), shape, 0.5);
+        let spot2 = c.add_spot((4.6, 7.2), shape, 0.4);
+
+        assert_eq!(c.spot_position(spot1), Some((1.1, 4.3)));
+
+        let transform = Transform::default().translate((3.2, -4.8));
+        c.set_view_transform(transform);
+
+        assert_eq!(c.spot_position(spot1), Some((1.1 + 3.2, 4.3 - 4.8)));
+        assert_eq!(c.spot_position(spot2), Some((4.6 + 3.2, 7.2 - 4.8)));
     }
 
     #[test]
