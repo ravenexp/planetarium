@@ -57,8 +57,9 @@
 //! // Draw on a square 256x256 pixel canvas.
 //! let mut c = Canvas::new(256, 256);
 //!
-//! // Define a round spot shape with diffraction radius of 2.5 pixels.
-//! let shape = SpotShape::default().scale(2.5);
+//! // Define an elliptic spot shape with diffraction radii of 2.5 x 1.5 pixels
+//! // rotated by 45 degrees counter-clockwise.
+//! let shape = SpotShape::default().stretch(2.5, 1.5).rotate(45.0);
 //!
 //! // Add some spots at random positions with varying shape size
 //! // and peak intensity.
@@ -154,6 +155,22 @@ pub type Vector = (f32, f32);
 ///
 /// A unit sized circular spot is scaled
 /// using the 2x2 transform matrix.
+///
+/// Basic operations
+/// ----------------
+///
+/// ```
+/// use planetarium::SpotShape;
+///
+/// // Create a unit-sized circular spot.
+/// let s1 = SpotShape::default();
+///
+/// // Upscale 2x
+/// let s2 = s1.scale(2.0);
+///
+/// // Stretch by 1.5 in the X direction and rotate clockwise by 45 degrees.
+/// let s3 = s2.stretch(1.5, 1.0).rotate(-45.0);
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct SpotShape {
     /// a11 - X dimension
@@ -256,6 +273,16 @@ impl Default for SpotShape {
     }
 }
 
+impl std::fmt::Display for SpotShape {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "[[{}, {}], [{}, {}]]",
+            self.xx, self.xy, self.yx, self.yy
+        )
+    }
+}
+
 impl std::fmt::Display for EncoderError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         // FIXME: Put full length error descriptions here.
@@ -272,6 +299,30 @@ impl SpotShape {
         let xy = k * self.xy;
         let yx = k * self.yx;
         let yy = k * self.yy;
+
+        SpotShape { xx, xy, yx, yy }
+    }
+
+    /// Linearly stretches the spot shape in X and Y directions.
+    pub fn stretch(&self, kx: f32, ky: f32) -> SpotShape {
+        let xx = kx * self.xx;
+        let xy = kx * self.xy;
+        let yx = ky * self.yx;
+        let yy = ky * self.yy;
+
+        SpotShape { xx, xy, yx, yy }
+    }
+
+    /// Rotates the spot shape counter-clockwise by `phi` degrees.
+    pub fn rotate(&self, phi: f32) -> SpotShape {
+        let phi_rad = (std::f32::consts::PI / 180.0) * phi;
+
+        let (s, c) = phi_rad.sin_cos();
+
+        let xx = c * self.xx - s * self.yx;
+        let yx = c * self.yx + s * self.xx;
+        let xy = c * self.xy - s * self.yy;
+        let yy = c * self.yy + s * self.xy;
 
         SpotShape { xx, xy, yx, yy }
     }
@@ -447,6 +498,24 @@ mod tests {
 
         let dim = c.dimensions();
         assert_eq!(dim, (w, h));
+    }
+
+    #[test]
+    fn create_shapes() {
+        let s1 = SpotShape::default();
+        assert_eq!(s1.to_string(), "[[1, 0], [0, 1]]");
+
+        let s2 = s1.scale(2.0);
+        assert_eq!(s2.to_string(), "[[2, 0], [0, 2]]");
+
+        let s3 = s2.stretch(2.0, 3.0);
+        assert_eq!(s3.to_string(), "[[4, 0], [0, 6]]");
+
+        let s4 = s3.rotate(90.0);
+        assert!(s4.xx.abs() < 1e-4, "xx = {}", s4.xx);
+        assert!((s4.xy - (-6.0)).abs() < 1e-4, "xy = {}", s4.xy);
+        assert!((s4.yx - 4.0).abs() < 1e-4, "yx = {}", s4.yx);
+        assert!(s4.yy.abs() < 1e-4, "yy = {}", s4.yy);
     }
 
     #[test]

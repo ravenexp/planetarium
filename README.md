@@ -55,8 +55,9 @@ illumination factor.
 // Draw on a square 256x256 pixel canvas.
 let mut c = Canvas::new(256, 256);
 
-// Define a round spot shape with diffraction radius of 2.5 pixels.
-let shape = SpotShape::default().scale(2.5);
+// Define an elliptic spot shape with diffraction radii of 2.5 x 1.5 pixels
+// rotated by 45 degrees counter-clockwise.
+let shape = SpotShape::default().stretch(2.5, 1.5).rotate(45.0);
 
 // Add some spots at random positions with varying shape size
 // and peak intensity.
