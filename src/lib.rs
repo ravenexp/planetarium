@@ -168,6 +168,9 @@ pub type Vector = (f32, f32);
 /// 2x2 matrix: `[[a11, a12], [a21, a22]]`
 pub type Matrix = [[f32; 2]; 2];
 
+/// 2x3 matrix: `[[a11, a12, a13], [a21, a22, a23]]`
+pub type Matrix23 = [[f32; 3]; 2];
+
 /// Spot shape definition matrix
 ///
 /// A unit sized circular spot is scaled
@@ -229,6 +232,24 @@ pub struct SpotShape {
 /// let t1 = Transform::default().translate((-10.0, 12.0));
 /// let t2 = t1.scale(1.5).rotate(-45.0);
 /// let t3 = t1.stretch(1.5, 3.0).compose(t2);
+/// ```
+///
+/// Conversions
+/// -----------
+///
+/// ```
+/// # use planetarium::Transform;
+/// // From a scalar factor
+/// let t1 = Transform::from(2.0);
+///
+/// // From a translation vector
+/// let t2 = Transform::from((2.0, -3.5));
+///
+/// // From a 2x2 linear coordinate transform matrix
+/// let t3 = Transform::from([[1.5, -0.5], [0.5, 2.5]]);
+///
+/// // From a 2x3 affine coordinate transform matrix
+/// let t4 = Transform::from([[1.5, -0.5, 4.5], [0.5, 2.5, 0.0]]);
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Transform {
@@ -382,6 +403,44 @@ impl Default for Transform {
             yy: 1.0,
             tx: 0.0,
             ty: 0.0,
+        }
+    }
+}
+
+impl From<f32> for Transform {
+    fn from(k: f32) -> Self {
+        Self::default().scale(k)
+    }
+}
+
+impl From<Vector> for Transform {
+    fn from(shift: Vector) -> Self {
+        Self::default().translate(shift)
+    }
+}
+
+impl From<Matrix> for Transform {
+    fn from(mat: Matrix) -> Self {
+        Transform {
+            xx: mat[0][0],
+            xy: mat[0][1],
+            yx: mat[1][0],
+            yy: mat[1][1],
+            tx: 0.0,
+            ty: 0.0,
+        }
+    }
+}
+
+impl From<Matrix23> for Transform {
+    fn from(mat: Matrix23) -> Self {
+        Transform {
+            xx: mat[0][0],
+            xy: mat[0][1],
+            yx: mat[1][0],
+            yy: mat[1][1],
+            tx: mat[0][2],
+            ty: mat[1][2],
         }
     }
 }
@@ -832,6 +891,24 @@ mod tests {
 
         let p = t5.apply((1.0, 1.0));
         assert_eq!(p, (68.375, 64.125));
+    }
+
+    #[test]
+    fn convert_transforms() {
+        let t1 = Transform::from(1.0);
+        assert_eq!(t1.to_string(), "[[1, 0, 0], [0, 1, 0]]");
+
+        let t2: Transform = 2.0.into();
+        assert_eq!(t2.to_string(), "[[2, 0, 0], [0, 2, 0]]");
+
+        let t3 = Transform::from((2.0, 3.0)).scale(2.0);
+        assert_eq!(t3.to_string(), "[[2, 0, 4], [0, 2, 6]]");
+
+        let t4 = Transform::from([[1.0, 2.0], [3.0, 4.0]]);
+        assert_eq!(t4.to_string(), "[[1, 2, 0], [3, 4, 0]]");
+
+        let t5 = Transform::from([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+        assert_eq!(t5.to_string(), "[[1, 2, 3], [4, 5, 6]]");
     }
 
     #[test]
