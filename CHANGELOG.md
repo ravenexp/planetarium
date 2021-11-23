@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.2] - 2021-11-23
+
+### CI configuration
+
+- Add clippy checks with `--no-default-features`
+
+### Documentation
+
+- Add a `Canvas` struct doctest
+
+### Features
+
+- Improve `SpotShape` type ergonomics
+- Implement the view coordinate transformation
+- Improve `Transform` type ergonomics
+
 ## [0.1.1] - 2021-11-16
 
 ### CI configuration

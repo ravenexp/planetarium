@@ -293,7 +293,42 @@ struct SpotRec {
     shape_inv: SpotShape,
 }
 
-/// Generates the synthesized image containing multiple light spots
+/// Opaque light spots drawing canvas object
+///
+/// Generates the synthesized image containing multiple light spots.
+///
+/// Basic operations
+/// ----------------
+///
+/// ```
+/// use planetarium::{Canvas, Transform};
+///
+/// // Draw on a square 256x256 pixel canvas.
+/// let mut c = Canvas::new(256, 256);
+///
+/// // Set the canvas background pixel value.
+/// c.set_background(100);
+///
+/// // Set the global brightness level.
+/// c.set_brightness(1.5);
+///
+/// // Set the view coordinate transformation: linear shift by [14.5 , -5.0].
+/// c.set_view_transform(Transform::default().translate((14.5, -5.0)));
+///
+/// // Clear the canvas.
+/// c.clear();
+///
+/// // Clear the canvas and paint the light spots.
+/// c.draw();
+///
+/// // Access the rendered image data as a linear pixel array.
+/// let image_pixbuf = c.pixels();
+///
+/// // Get pixel at x = 100, y = 200.
+/// let (x, y) = (100, 200);
+/// let (image_width, image_height) = c.dimensions();
+/// let val_x_y = image_pixbuf[(y * image_width + x) as usize];
+/// ```
 pub struct Canvas {
     /// Canvas width in pixels
     width: u32,
