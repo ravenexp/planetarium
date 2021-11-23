@@ -219,6 +219,17 @@ pub struct SpotShape {
 ///
 /// Contains a 2x3 linear transform matrix to be applied
 /// to homogenous coordinates internally.
+///
+/// Basic operations
+/// ----------------
+///
+/// ```
+/// use planetarium::Transform;
+///
+/// let t1 = Transform::default().translate((-10.0, 12.0));
+/// let t2 = t1.scale(1.5).rotate(-45.0);
+/// let t3 = t1.stretch(1.5, 3.0).compose(t2);
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Transform {
     /// a11 - X scale
@@ -375,6 +386,16 @@ impl Default for Transform {
     }
 }
 
+impl std::fmt::Display for Transform {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "[[{}, {}, {}], [{}, {}, {}]]",
+            self.xx, self.xy, self.tx, self.yx, self.yy, self.ty
+        )
+    }
+}
+
 impl std::fmt::Display for EncoderError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         // FIXME: Put full length error descriptions here.
@@ -429,6 +450,88 @@ impl Transform {
         transform.ty += shift.1;
 
         transform
+    }
+
+    /// Linearly scales the coordinates by a single scalar factor.
+    pub fn scale(&self, k: f32) -> Transform {
+        let xx = k * self.xx;
+        let xy = k * self.xy;
+        let yx = k * self.yx;
+        let yy = k * self.yy;
+        let tx = k * self.tx;
+        let ty = k * self.ty;
+
+        Transform {
+            xx,
+            xy,
+            yx,
+            yy,
+            tx,
+            ty,
+        }
+    }
+
+    /// Linearly stretches the coordinates in X and Y directions.
+    pub fn stretch(&self, kx: f32, ky: f32) -> Transform {
+        let xx = kx * self.xx;
+        let xy = kx * self.xy;
+        let yx = ky * self.yx;
+        let yy = ky * self.yy;
+        let tx = kx * self.tx;
+        let ty = ky * self.ty;
+
+        Transform {
+            xx,
+            xy,
+            yx,
+            yy,
+            tx,
+            ty,
+        }
+    }
+
+    /// Rotates the coordinates counter-clockwise by `phi` degrees.
+    pub fn rotate(&self, phi: f32) -> Transform {
+        let phi_rad = (std::f32::consts::PI / 180.0) * phi;
+
+        let (s, c) = phi_rad.sin_cos();
+
+        let xx = c * self.xx - s * self.yx;
+        let yx = c * self.yx + s * self.xx;
+        let xy = c * self.xy - s * self.yy;
+        let yy = c * self.yy + s * self.xy;
+        let tx = c * self.tx - s * self.ty;
+        let ty = c * self.ty + s * self.tx;
+
+        Transform {
+            xx,
+            xy,
+            yx,
+            yy,
+            tx,
+            ty,
+        }
+    }
+
+    /// Composes the coordinate transformation with an outer transformation.
+    ///
+    /// In the matrix multiplication form: `[t][self]`
+    pub fn compose(&self, t: Transform) -> Transform {
+        let xx = self.xx * t.xx + self.yx * t.xy;
+        let xy = self.xy * t.xx + self.yy * t.xy;
+        let yx = self.yx * t.yy + self.xx * t.yx;
+        let yy = self.yy * t.yy + self.xy * t.yx;
+        let tx = self.tx * t.xx + self.ty * t.xy + t.tx;
+        let ty = self.ty * t.yy + self.tx * t.yx + t.ty;
+
+        Transform {
+            xx,
+            xy,
+            yx,
+            yy,
+            tx,
+            ty,
+        }
     }
 
     /// Transforms 2D point coordinates using the affine transformation matrix.
@@ -708,6 +811,27 @@ mod tests {
 
         // NOP
         c.set_spot_illumination(33, 0.0);
+    }
+
+    #[test]
+    fn create_transform() {
+        let t1 = Transform::default().translate((3.5, -4.25));
+        assert_eq!(t1.to_string(), "[[1, 0, 3.5], [0, 1, -4.25]]");
+
+        let t2 = Transform::default().scale(3.5).translate((1.0, 2.0));
+        assert_eq!(t2.to_string(), "[[3.5, 0, 1], [0, 3.5, 2]]");
+
+        let t3 = t2.stretch(3.5, 4.0);
+        assert_eq!(t3.to_string(), "[[12.25, 0, 3.5], [0, 14, 8]]");
+
+        let t4 = t3.compose(t1);
+        assert_eq!(t4.to_string(), "[[12.25, 0, 7], [0, 14, 3.75]]");
+
+        let t5 = t4.compose(t2);
+        assert_eq!(t5.to_string(), "[[42.875, 0, 25.5], [0, 49, 15.125]]");
+
+        let p = t5.apply((1.0, 1.0));
+        assert_eq!(p, (68.375, 64.125));
     }
 
     #[test]
