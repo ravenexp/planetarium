@@ -150,7 +150,7 @@ mod export;
 mod gamma;
 mod pattern;
 
-pub use crate::export::{EncoderError, ImageFormat};
+pub use crate::export::{EncoderError, ImageFormat, Window};
 
 use crate::gamma::GammaCurve8;
 use crate::pattern::AiryPattern;
