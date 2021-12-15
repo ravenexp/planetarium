@@ -13,9 +13,9 @@ use std::io::{Cursor, Write};
 
 use png::{BitDepth, ColorType, Encoder, ScaledFloat, Writer};
 
-use crate::gamma::GammaCurve8;
+use crate::{Canvas, EncoderError, Pixel};
 
-use super::{Canvas, EncoderError, Pixel};
+use crate::gamma::GammaCurve8;
 
 /// Initial encoded PNG buffer capacity
 const PNG_BUF_CAPACITY: usize = 0x10000;

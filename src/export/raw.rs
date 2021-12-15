@@ -7,7 +7,7 @@
 //! Contains implementations of private methods
 //! for the existing public types.
 
-use super::{Canvas, EncoderError};
+use crate::{Canvas, EncoderError};
 
 impl Canvas {
     /// Exports the canvas contents in the 8-bit gamma-compressed RAW image format.

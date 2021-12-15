@@ -146,12 +146,11 @@
 //! ```
 
 mod draw;
+mod export;
 mod gamma;
 mod pattern;
-mod raw;
 
-#[cfg(feature = "png")]
-mod png;
+pub use crate::export::{EncoderError, ImageFormat};
 
 use crate::gamma::GammaCurve8;
 use crate::pattern::AiryPattern;
@@ -358,33 +357,6 @@ pub struct Canvas {
     gamma_curve: GammaCurve8,
 }
 
-/// Exportable canvas image formats
-#[derive(Debug, Clone, Copy)]
-#[non_exhaustive]
-pub enum ImageFormat {
-    // Internal encoders:
-    /// 8-bit gamma-compressed grayscale RAW
-    RawGamma8Bpp,
-    /// 10-bit linear light grayscale little-endian RAW
-    RawLinear10BppLE,
-    /// 12-bit linear light grayscale little-endian RAW
-    RawLinear12BppLE,
-
-    // Require "png" feature:
-    /// 8-bit gamma-compressed grayscale PNG
-    PngGamma8Bpp,
-    /// 16-bit linear light grayscale PNG
-    PngLinear16Bpp,
-}
-
-/// Image export encoder error type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[non_exhaustive]
-pub enum EncoderError {
-    /// Requested image format not supported
-    NotImplemented,
-}
-
 impl Default for SpotShape {
     fn default() -> Self {
         SpotShape {
@@ -489,15 +461,6 @@ impl std::fmt::Display for Transform {
         )
     }
 }
-
-impl std::fmt::Display for EncoderError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        // FIXME: Put full length error descriptions here.
-        write!(f, "{:?}", self)
-    }
-}
-
-impl std::error::Error for EncoderError {}
 
 impl SpotShape {
     /// Linearly scales the spot shape by a single scalar factor.
@@ -775,29 +738,6 @@ impl Canvas {
     /// Sets the global brightness level (light spot intensity adjustment).
     pub fn set_brightness(&mut self, brightness: f32) {
         self.brightness = brightness;
-    }
-
-    /// Exports the canvas contents in the requested image format.
-    #[cfg(not(feature = "png"))]
-    pub fn export_image(&self, format: ImageFormat) -> Result<Vec<u8>, EncoderError> {
-        match format {
-            ImageFormat::RawGamma8Bpp => self.export_raw8bpp(),
-            ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(),
-            ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(),
-            _ => Err(EncoderError::NotImplemented),
-        }
-    }
-
-    /// Exports the canvas contents in the requested image format.
-    #[cfg(feature = "png")]
-    pub fn export_image(&self, format: ImageFormat) -> Result<Vec<u8>, EncoderError> {
-        match format {
-            ImageFormat::RawGamma8Bpp => self.export_raw8bpp(),
-            ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(),
-            ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(),
-            ImageFormat::PngGamma8Bpp => self.export_png8bpp(),
-            ImageFormat::PngLinear16Bpp => self.export_png16bpp(),
-        }
     }
 }
 
