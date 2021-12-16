@@ -7,32 +7,39 @@
 //! Contains implementations of private methods
 //! for the existing public types.
 
-use crate::{Canvas, EncoderError};
+use crate::{Canvas, EncoderError, Window};
 
 impl Canvas {
-    /// Exports the canvas contents in the 8-bit gamma-compressed RAW image format.
-    pub(super) fn export_raw8bpp(&self) -> Result<Vec<u8>, EncoderError> {
-        // Memory buffer to encode the RAW data to
-        let rawbuf = self
-            .pixels()
-            .iter()
-            .map(|p| self.gamma_curve.transform(*p))
-            .collect();
+    /// Exports the canvas window contents in the 8-bit gamma-compressed RAW image format.
+    pub(super) fn export_raw8bpp(&self, window: Window) -> Result<Vec<u8>, EncoderError> {
+        // Memory buffer to encode the RAW pixel data to
+        let mut rawbuf: Vec<u8> = Vec::with_capacity(window.len());
+
+        // The window is bounds checked by the caller.
+        for span in self.window_spans(window).unwrap() {
+            rawbuf.extend(span.iter().map(|p| self.gamma_curve.transform(*p)));
+        }
 
         Ok(rawbuf)
     }
 
-    /// Exports the canvas contents in the `X`-bit linear light grayscale
+    /// Exports the canvas window contents in the `X`-bit linear light grayscale
     /// little-endian RAW image format.
     ///
     /// The const generic `X` must be in the range from 9 to 16.
-    pub(super) fn export_raw1xbpp<const X: u16>(&self) -> Result<Vec<u8>, EncoderError> {
-        // Memory buffer to encode the RAW data to
-        let mut rawbuf: Vec<u8> = Vec::with_capacity(2 * self.pixels().len());
+    pub(super) fn export_raw1xbpp<const X: u16>(
+        &self,
+        window: Window,
+    ) -> Result<Vec<u8>, EncoderError> {
+        // Memory buffer to encode the RAW pixel data to
+        let mut rawbuf: Vec<u8> = Vec::with_capacity(2 * window.len());
 
-        for p in self.pixels() {
-            let bytes = (p >> (16 - X)).to_le_bytes();
-            rawbuf.extend_from_slice(&bytes);
+        // The window is bounds checked by the caller.
+        for span in self.window_spans(window).unwrap() {
+            for p in span {
+                let bytes = (p >> (16 - X)).to_le_bytes();
+                rawbuf.extend_from_slice(&bytes);
+            }
         }
 
         Ok(rawbuf)
@@ -76,6 +83,32 @@ mod tests {
     }
 
     #[test]
+    fn export_window_raw8bpp() {
+        let w = 256;
+        let h = 256;
+
+        let mut c = Canvas::new(w, h);
+
+        let shape = SpotShape::default().scale(4.5);
+
+        c.add_spot((100.6, 150.2), shape, 0.9);
+        c.add_spot((103.8, 146.5), shape, 0.5);
+
+        c.set_background(1000);
+        c.draw();
+
+        let wnd = Window::new(32, 16).at(90, 140);
+
+        let img = c
+            .export_window_image(wnd, ImageFormat::RawGamma8Bpp)
+            .unwrap();
+        assert_eq!(img.len(), wnd.len());
+        assert_eq!(img[300], 196);
+
+        // write("test8bpp_window.raw", img).unwrap();
+    }
+
+    #[test]
     fn export_raw10bpp() {
         let w = 256;
         let h = 256;
@@ -105,6 +138,31 @@ mod tests {
         assert_eq!(img[1], 0x00);
 
         // write("test10bpp_2.raw", img).unwrap();
+    }
+
+    #[test]
+    fn export_window_raw10bpp() {
+        let w = 256;
+        let h = 256;
+
+        let mut c = Canvas::new(w, h);
+
+        let shape = SpotShape::default().scale(4.5);
+
+        c.add_spot((100.6, 150.2), shape, 0.9);
+        c.add_spot((103.8, 146.5), shape, 0.5);
+
+        c.set_background(1000);
+        c.draw();
+
+        let wnd = Window::new(32, 16).at(90, 140);
+
+        let img = c
+            .export_window_image(wnd, ImageFormat::RawLinear10BppLE)
+            .unwrap();
+        assert_eq!(img.len(), 2 * wnd.len());
+
+        // write("test10bpp_window.raw", img).unwrap();
     }
 
     #[test]

@@ -88,6 +88,8 @@ pub enum ImageFormat {
 pub enum EncoderError {
     /// Requested image format not supported
     NotImplemented,
+    /// Requested image window is out of bounds
+    BrokenWindow,
 }
 
 /// Canvas window image scanlines iterator
@@ -236,10 +238,32 @@ impl Canvas {
     /// Exports the canvas contents in the requested image format.
     #[cfg(not(feature = "png"))]
     pub fn export_image(&self, format: ImageFormat) -> Result<Vec<u8>, EncoderError> {
+        // Export the entire canvas.
+        let window = Window::new(self.width, self.height);
+
         match format {
-            ImageFormat::RawGamma8Bpp => self.export_raw8bpp(),
-            ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(),
-            ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(),
+            ImageFormat::RawGamma8Bpp => self.export_raw8bpp(window),
+            ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(window),
+            ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(window),
+            _ => Err(EncoderError::NotImplemented),
+        }
+    }
+
+    /// Exports the canvas window image in the requested image format.
+    #[cfg(not(feature = "png"))]
+    pub fn export_window_image(
+        &self,
+        window: Window,
+        format: ImageFormat,
+    ) -> Result<Vec<u8>, EncoderError> {
+        if !window.is_inside(self.width, self.height) {
+            return Err(EncoderError::BrokenWindow);
+        }
+
+        match format {
+            ImageFormat::RawGamma8Bpp => self.export_raw8bpp(window),
+            ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(window),
+            ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(window),
             _ => Err(EncoderError::NotImplemented),
         }
     }
@@ -247,12 +271,35 @@ impl Canvas {
     /// Exports the canvas contents in the requested image format.
     #[cfg(feature = "png")]
     pub fn export_image(&self, format: ImageFormat) -> Result<Vec<u8>, EncoderError> {
+        // Export the entire canvas.
+        let window = Window::new(self.width, self.height);
+
         match format {
-            ImageFormat::RawGamma8Bpp => self.export_raw8bpp(),
-            ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(),
-            ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(),
-            ImageFormat::PngGamma8Bpp => self.export_png8bpp(),
-            ImageFormat::PngLinear16Bpp => self.export_png16bpp(),
+            ImageFormat::RawGamma8Bpp => self.export_raw8bpp(window),
+            ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(window),
+            ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(window),
+            ImageFormat::PngGamma8Bpp => self.export_png8bpp(window),
+            ImageFormat::PngLinear16Bpp => self.export_png16bpp(window),
+        }
+    }
+
+    /// Exports the canvas window image in the requested image format.
+    #[cfg(feature = "png")]
+    pub fn export_window_image(
+        &self,
+        window: Window,
+        format: ImageFormat,
+    ) -> Result<Vec<u8>, EncoderError> {
+        if !window.is_inside(self.width, self.height) {
+            return Err(EncoderError::BrokenWindow);
+        }
+
+        match format {
+            ImageFormat::RawGamma8Bpp => self.export_raw8bpp(window),
+            ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(window),
+            ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(window),
+            ImageFormat::PngGamma8Bpp => self.export_png8bpp(window),
+            ImageFormat::PngLinear16Bpp => self.export_png16bpp(window),
         }
     }
 }
