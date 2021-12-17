@@ -144,6 +144,37 @@
 //! // Export to a 16-bit linear light grayscale PNG image.
 //! let png_16bpp_bytes = c.export_image(ImageFormat::PngLinear16Bpp).unwrap();
 //! ```
+//!
+//! Window image export
+//! -------------------
+//!
+//! The `Canvas` object additionally supports windowed image export.
+//!
+//! A single rectangular window represents a region of interest (ROI)
+//! on the canvas image. Window rectangle coordinates are represented
+//! by the public `Window` structure.
+//!
+//! ### Example window image export code
+//!
+//! ```
+//! use planetarium::{Canvas, ImageFormat, Window};
+//!
+//! let mut c = Canvas::new(256, 256);
+//!
+//! c.set_background(1000);
+//! c.clear();
+//!
+//! // Create a 32x16 pixels window with origin at (100, 150).
+//! let wnd = Window::new(32, 16).at(100, 150);
+//!
+//! let fmt = ImageFormat::RawGamma8Bpp;
+//!
+//! // Export to the canvas window image bytes.
+//! let raw_window_bytes = c.export_window_image(wnd, fmt).unwrap();
+//!
+//! // Only the pixels within the window rectangle are exported.
+//! assert_eq!(raw_window_bytes.len(), 32 * 16);
+//! ```
 
 mod draw;
 mod export;

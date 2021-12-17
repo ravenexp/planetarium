@@ -129,3 +129,26 @@ let png_8bpp_bytes = c.export_image(ImageFormat::PngGamma8Bpp).unwrap();
 // Export to a 16-bit linear light grayscale PNG image.
 let png_16bpp_bytes = c.export_image(ImageFormat::PngLinear16Bpp).unwrap();
 ```
+
+Window image export
+-------------------
+
+The `Canvas` object additionally supports windowed image export.
+
+A single rectangular window represents a region of interest (ROI)
+on the canvas image. Window rectangle coordinates are represented
+by the public `Window` structure.
+
+### Example window image export code
+
+```rust
+let mut c = Canvas::new(256, 256);
+
+// Create a 32x16 pixels window with origin at (100, 150).
+let wnd = Window::new(32, 16).at(100, 150);
+
+let fmt = ImageFormat::RawGamma8Bpp;
+
+// Export to the canvas window image bytes.
+let raw_window_bytes = c.export_window_image(wnd, fmt).unwrap();
+```
