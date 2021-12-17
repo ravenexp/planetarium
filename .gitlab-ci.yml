@@ -41,10 +41,10 @@ fmt:
 clippy:
     stage: check
     script:
-      - cargo clippy
-      - cargo clippy --no-default-features
-      - cargo clippy --tests
-      - cargo clippy --tests --no-default-features
+      - cargo clippy -- --deny warnings
+      - cargo clippy --no-default-features -- --deny warnings
+      - cargo clippy --tests -- --deny warnings
+      - cargo clippy --tests --no-default-features -- --deny warnings
 
 compile:
     stage: build
