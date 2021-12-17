@@ -1,6 +1,26 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2021-12-17
+
+### CI configuration
+
+- Fail the clippy check on warnings
+
+### Documentation
+
+- Add window image export examples
+
+### Features
+
+- Add a public rectangle struct named `Window`
+- Add `window_spans()` method for windowed access
+- Add the window image export method
+
+### Refactor
+
+- Move image export code into a submodule
+
 ## [0.1.2] - 2021-11-23
 
 ### CI configuration
