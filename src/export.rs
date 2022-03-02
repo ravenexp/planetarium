@@ -203,7 +203,6 @@ impl Window {
     }
 
     /// Returns the total number of pixels in the window.
-    #[allow(dead_code)]
     fn len(&self) -> usize {
         (self.w * self.h) as usize
     }
@@ -264,6 +263,22 @@ impl Canvas {
             ImageFormat::RawGamma8Bpp => self.export_raw8bpp(window),
             ImageFormat::RawLinear10BppLE => self.export_raw1xbpp::<10>(window),
             ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(window),
+            _ => Err(EncoderError::NotImplemented),
+        }
+    }
+
+    /// Exports the subsampled canvas image in the requested image format.
+    ///
+    /// The integer subsampling factors in X and Y directions
+    /// are passed in `factors`.
+    pub fn export_subsampled_image(
+        &self,
+        factors: (u32, u32),
+        format: ImageFormat,
+    ) -> Result<Vec<u8>, EncoderError> {
+        match format {
+            ImageFormat::RawLinear10BppLE => self.export_sub_raw1xbpp::<10>(factors),
+            ImageFormat::RawLinear12BppLE => self.export_sub_raw1xbpp::<12>(factors),
             _ => Err(EncoderError::NotImplemented),
         }
     }
