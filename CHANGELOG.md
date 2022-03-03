@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2022-03-03
+
+### Bug Fixes
+
+- Update the documentation publish job
+
+### Features
+
+- Add subsampled canvas image export method
+
 ## [0.1.3] - 2021-12-17
 
 ### CI configuration
