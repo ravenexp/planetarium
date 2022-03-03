@@ -1,7 +1,6 @@
 variables:
     CARGO_HOME: "${CI_PROJECT_DIR}/cargo"
     RELEASE_NAME: "${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}-g${CI_COMMIT_SHORT_SHA}-b${CI_PIPELINE_ID}"
-    SITE_DIR: "doc"
 
 default:
     tags:
@@ -56,21 +55,19 @@ docs:
     stage: build
     script:
       - cargo doc
-      - cp -r target/doc html
     artifacts:
         name: "${RELEASE_NAME}-docs"
         paths:
-          - html
+          - target/doc
 
 package:
     stage: build
     script:
       - cargo package
-      - cp -r target/package .
     artifacts:
         name: "${RELEASE_NAME}-package"
         paths:
-          - package
+          - target/package
 
 runtests:
     stage: test
@@ -78,6 +75,12 @@ runtests:
       - cargo test
 
 include:
-  - project: 'devops/support'
+  - project: "devops/support"
     ref: master
-    file: 'includes/artifacts/deploy-site.yml'
+    file: "includes/artifacts/deploy-site.yml"
+
+deploy-site:
+    variables:
+        DEPLOY_DIR: "target/doc"
+        DEPLOY_STRATEGY: "custom"
+        DEPLOY_PATH: "$CI_COMMIT_REF_NAME"
