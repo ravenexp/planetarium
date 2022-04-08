@@ -2,9 +2,6 @@
 /target
 Cargo.lock
 
-# Vim tags
-tags
-
 # GitLab CI stuff
-/.cargo
-/cargo
+/.cargo/
+/cargo/

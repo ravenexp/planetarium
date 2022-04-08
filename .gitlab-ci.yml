@@ -1,12 +1,13 @@
 variables:
-    CARGO_HOME: "${CI_PROJECT_DIR}/cargo"
     RELEASE_NAME: "${CI_PROJECT_NAME}-${CI_COMMIT_REF_SLUG}-g${CI_COMMIT_SHORT_SHA}-b${CI_PIPELINE_ID}"
 
-default:
-    tags:
-      - linux-docker
-
-image: ${PLG_CI_DOCKER_TAG}/rusty-python:latest
+include:
+  - project: "devops/support"
+    ref: master
+    file:
+      - "includes/build/rust/crates-io-mirror.yml"
+      - "includes/reports/cargo-junit.yml"
+      - "includes/docs/rustdoc.yml"
 
 stages:
   - check
@@ -14,23 +15,10 @@ stages:
   - test
   - deploy
 
-cache:
-    key:
-        files:
-          - Cargo.toml
-    paths:
-      - cargo
-
-prefetch:
-    stage: .pre
-    script:
-      - mkdir -p .cargo
-      - echo "[source.crates-io]" > .cargo/config
-      - echo registry = \""${PLG_CI_CRATES_IO_MIRROR_INDEX}"\" >> .cargo/config
-      - cargo fetch
-    artifacts:
-        paths:
-          - .cargo
+default:
+    tags:
+      - linux-docker
+    image: ${PLG_CI_DOCKER_TAG}/rusty-python:latest
 
 fmt:
     stage: check
@@ -40,8 +28,6 @@ fmt:
 clippy:
     stage: check
     script:
-      - cargo clippy -- --deny warnings
-      - cargo clippy --no-default-features -- --deny warnings
       - cargo clippy --tests -- --deny warnings
       - cargo clippy --tests --no-default-features -- --deny warnings
 
@@ -50,15 +36,6 @@ compile:
     script:
       - cargo build
       - cargo build --no-default-features
-
-docs:
-    stage: build
-    script:
-      - cargo doc
-    artifacts:
-        name: "${RELEASE_NAME}-docs"
-        paths:
-          - target/doc
 
 package:
     stage: build
@@ -73,14 +50,4 @@ runtests:
     stage: test
     script:
       - cargo test
-
-include:
-  - project: "devops/support"
-    ref: master
-    file: "includes/artifacts/deploy-site.yml"
-
-deploy-site:
-    variables:
-        DEPLOY_DIR: "target/doc"
-        DEPLOY_STRATEGY: "custom"
-        DEPLOY_PATH: "$CI_COMMIT_REF_NAME"
+      - cargo test --no-default-features
