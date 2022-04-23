@@ -75,224 +75,101 @@ impl Canvas {
 
 #[cfg(test)]
 mod tests {
-    // use std::fs::write;
-
     use crate::{ImageFormat, SpotShape};
 
     use super::*;
 
-    #[test]
-    fn export_raw8bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-        c.set_background(0xAA00);
-        c.clear();
-
-        let img = c.export_image(ImageFormat::RawGamma8Bpp).unwrap();
-        assert_eq!(img.len(), 65536);
-
-        // write("test8bpp_1.raw", img).unwrap();
+    /// Creates a 256x256 canvas image for all tests.
+    fn mkimage() -> Canvas {
+        let mut c = Canvas::new(256, 256);
+        c.set_background(1000);
 
         let shape = SpotShape::default().scale(4.5);
+        let shape2 = shape.stretch(1.7, 0.7).rotate(45.0);
 
         c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
+        c.add_spot((103.8, 146.5), shape2, 0.5);
 
-        c.set_background(1000);
         c.draw();
+        c
+    }
 
-        let img = c.export_image(ImageFormat::RawGamma8Bpp).unwrap();
-        assert_eq!(img.len(), 65536);
-
-        // write("test8bpp_2.raw", img).unwrap();
+    #[test]
+    fn export_raw8bpp() {
+        let img = mkimage().export_image(ImageFormat::RawGamma8Bpp).unwrap();
+        assert_eq!(img.len(), 256 * 256);
+        assert_eq!(img[0], 33);
+        assert_eq!(img[150 * 256 + 100], 238);
     }
 
     #[test]
     fn export_window_raw8bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-
-        let shape = SpotShape::default().scale(4.5);
-
-        c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
-
-        c.set_background(1000);
-        c.draw();
-
         let wnd = Window::new(32, 16).at(90, 140);
 
-        let img = c
+        let img = mkimage()
             .export_window_image(wnd, ImageFormat::RawGamma8Bpp)
             .unwrap();
         assert_eq!(img.len(), wnd.len());
-        assert_eq!(img[300], 196);
-
-        // write("test8bpp_window.raw", img).unwrap();
+        assert_eq!(img[300], 186);
     }
 
     #[test]
     fn export_raw10bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-        c.set_background(0xAA00);
-        c.clear();
-
-        let img = c.export_image(ImageFormat::RawLinear10BppLE).unwrap();
-        assert_eq!(img.len(), 131072);
-        assert_eq!(img[0], 0xA8);
-        assert_eq!(img[1], 0x02);
-
-        // write("test10bpp_1.raw", img).unwrap();
-
-        let shape = SpotShape::default().scale(4.5);
-
-        c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
-
-        c.set_background(1000);
-        c.draw();
-
-        let img = c.export_image(ImageFormat::RawLinear10BppLE).unwrap();
-        assert_eq!(img.len(), 131072);
+        let img = mkimage()
+            .export_image(ImageFormat::RawLinear10BppLE)
+            .unwrap();
+        assert_eq!(img.len(), 256 * 256 * 2);
         assert_eq!(img[0], 0x0F);
         assert_eq!(img[1], 0x00);
-
-        // write("test10bpp_2.raw", img).unwrap();
+        assert_eq!(img[2 * (150 * 256 + 100)], 104);
+        assert_eq!(img[2 * (150 * 256 + 100) + 1], 3);
     }
 
     #[test]
     fn export_sub_raw10bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-        c.set_background(0xAA00);
-        c.clear();
-
-        let img = c
+        let img = mkimage()
             .export_subsampled_image((2, 2), ImageFormat::RawLinear10BppLE)
             .unwrap();
-        assert_eq!(img.len(), 32768);
-        assert_eq!(img[0], 0xA8);
-        assert_eq!(img[1], 0x02);
-
-        // write("test_sub_10bpp_1.raw", img).unwrap();
-
-        let shape = SpotShape::default().scale(4.5);
-
-        c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
-
-        c.set_background(1000);
-        c.draw();
-
-        let img = c
-            .export_subsampled_image((2, 2), ImageFormat::RawLinear10BppLE)
-            .unwrap();
-        assert_eq!(img.len(), 32768);
+        assert_eq!(img.len(), 256 * 256 * 2 / 2 / 2);
         assert_eq!(img[0], 0x0F);
         assert_eq!(img[1], 0x00);
-
-        // write("test_sub_10bpp_2.raw", img).unwrap();
+        assert_eq!(img[2 * (150 * 128 + 100) / 2], 104);
+        assert_eq!(img[2 * (150 * 128 + 100) / 2 + 1], 3);
     }
 
     #[test]
     fn export_window_raw10bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-
-        let shape = SpotShape::default().scale(4.5);
-
-        c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
-
-        c.set_background(1000);
-        c.draw();
-
         let wnd = Window::new(32, 16).at(90, 140);
 
-        let img = c
+        let img = mkimage()
             .export_window_image(wnd, ImageFormat::RawLinear10BppLE)
             .unwrap();
         assert_eq!(img.len(), 2 * wnd.len());
-
-        // write("test10bpp_window.raw", img).unwrap();
+        assert_eq!(img[300 * 2], 243);
+        assert_eq!(img[300 * 2 + 1], 1);
     }
 
     #[test]
     fn export_raw12bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-        c.set_background(0xAA00);
-        c.clear();
-
-        let img = c.export_image(ImageFormat::RawLinear12BppLE).unwrap();
-        assert_eq!(img.len(), 131072);
-        assert_eq!(img[0], 0xA0);
-        assert_eq!(img[1], 0x0A);
-
-        // write("test12bpp_1.raw", img).unwrap();
-
-        let shape = SpotShape::default().scale(4.5);
-
-        c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
-
-        c.set_background(1000);
-        c.draw();
-
-        let img = c.export_image(ImageFormat::RawLinear12BppLE).unwrap();
-        assert_eq!(img.len(), 131072);
+        let img = mkimage()
+            .export_image(ImageFormat::RawLinear12BppLE)
+            .unwrap();
+        assert_eq!(img.len(), 256 * 256 * 2);
         assert_eq!(img[0], 0x3E);
         assert_eq!(img[1], 0x00);
-
-        // write("test12bpp_2.raw", img).unwrap();
+        assert_eq!(img[2 * (150 * 256 + 100)], 162);
+        assert_eq!(img[2 * (150 * 256 + 100) + 1], 13);
     }
 
     #[test]
     fn export_sub_raw12bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-        c.set_background(0xAA00);
-        c.clear();
-
-        let img = c
-            .export_subsampled_image((4, 4), ImageFormat::RawLinear12BppLE)
+        let img = mkimage()
+            .export_subsampled_image((4, 2), ImageFormat::RawLinear12BppLE)
             .unwrap();
-        assert_eq!(img.len(), 8192);
-        assert_eq!(img[0], 0xA0);
-        assert_eq!(img[1], 0x0A);
-
-        // write("test_sub_12bpp_1.raw", img).unwrap();
-
-        let shape = SpotShape::default().scale(4.5);
-
-        c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
-
-        c.set_background(1000);
-        c.draw();
-
-        let img = c
-            .export_subsampled_image((4, 4), ImageFormat::RawLinear12BppLE)
-            .unwrap();
-        assert_eq!(img.len(), 8192);
+        assert_eq!(img.len(), 256 * 256 * 2 / 4 / 2);
         assert_eq!(img[0], 0x3E);
         assert_eq!(img[1], 0x00);
-
-        // write("test_sub_12bpp_2.raw", img).unwrap();
+        assert_eq!(img[2 * (150 / 2 * 64 + 100 / 4)], 162);
+        assert_eq!(img[2 * (150 / 2 * 64 + 100 / 4) + 1], 13);
     }
 }

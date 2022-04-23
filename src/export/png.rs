@@ -109,115 +109,54 @@ impl Canvas {
 
 #[cfg(test)]
 mod tests {
-    // use std::fs::write;
-
     use crate::{ImageFormat, SpotShape};
 
     use super::*;
 
-    #[test]
-    fn export_png8bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-        c.set_background(0xAA00);
-        c.clear();
-
-        let img = c.export_image(ImageFormat::PngGamma8Bpp).unwrap();
-        assert_eq!(img.len(), 458);
-
-        // write("test8bpp_1.png", img).unwrap();
+    /// Creates a 256x256 canvas image for all tests.
+    fn mkimage() -> Canvas {
+        let mut c = Canvas::new(256, 256);
+        c.set_background(1000);
 
         let shape = SpotShape::default().scale(4.5);
+        let shape2 = shape.stretch(1.7, 0.7).rotate(45.0);
 
         c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
+        c.add_spot((103.8, 146.5), shape2, 0.5);
 
-        c.set_background(1000);
         c.draw();
+        c
+    }
 
-        let img = c.export_image(ImageFormat::PngGamma8Bpp).unwrap();
-        assert_eq!(img.len(), 853);
-
-        // write("test8bpp_2.png", img).unwrap();
+    #[test]
+    fn export_png8bpp() {
+        let img = mkimage().export_image(ImageFormat::PngGamma8Bpp).unwrap();
+        assert_eq!(img.len(), 912);
     }
 
     #[test]
     fn export_window_png8bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-
-        let shape = SpotShape::default().scale(4.5);
-
-        c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
-
-        c.set_background(1000);
-        c.draw();
-
         let wnd = Window::new(32, 16).at(90, 140);
 
-        let img = c
+        let img = mkimage()
             .export_window_image(wnd, ImageFormat::PngGamma8Bpp)
             .unwrap();
-        assert_eq!(img.len(), 385);
-
-        // write("test8bpp_window.png", img).unwrap();
+        assert_eq!(img.len(), 413);
     }
 
     #[test]
     fn export_png16bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-        c.set_background(0xAA00);
-        c.clear();
-
-        let img = c.export_image(ImageFormat::PngLinear16Bpp).unwrap();
-        assert_eq!(img.len(), 679);
-
-        // write("test16bpp_1.png", img).unwrap();
-
-        let shape = SpotShape::default().scale(4.5);
-
-        c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
-
-        c.set_background(1000);
-        c.draw();
-
-        let img = c.export_image(ImageFormat::PngLinear16Bpp).unwrap();
-        assert_eq!(img.len(), 1471);
-
-        // write("test16bpp_2.png", img).unwrap();
+        let img = mkimage().export_image(ImageFormat::PngLinear16Bpp).unwrap();
+        assert_eq!(img.len(), 1621);
     }
 
     #[test]
     fn export_window_png16bpp() {
-        let w = 256;
-        let h = 256;
-
-        let mut c = Canvas::new(w, h);
-
-        let shape = SpotShape::default().scale(4.5);
-
-        c.add_spot((100.6, 150.2), shape, 0.9);
-        c.add_spot((103.8, 146.5), shape, 0.5);
-
-        c.set_background(1000);
-        c.draw();
-
         let wnd = Window::new(32, 16).at(90, 140);
 
-        let img = c
+        let img = mkimage()
             .export_window_image(wnd, ImageFormat::PngLinear16Bpp)
             .unwrap();
-        assert_eq!(img.len(), 675);
-
-        // write("test16bpp_window.png", img).unwrap();
+        assert_eq!(img.len(), 756);
     }
 }
