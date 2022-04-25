@@ -4,6 +4,11 @@ Planetarium
 Sub-pixel precision light spot rendering library for astronomy
 and video tracking applications.
 
+Sample image
+------------
+
+![Sample](https://raw.githubusercontent.com/ravenexp/planetarium/main/tests/test_8bpp.png)
+
 Example usage
 -------------
 
