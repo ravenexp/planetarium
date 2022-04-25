@@ -108,3 +108,51 @@ fn export_sub_raw12bpp() {
     let golden_img = include_bytes!("test_sub_12bpp.raw");
     assert_eq!(img, golden_img);
 }
+
+#[test]
+#[cfg(feature = "png")]
+fn export_png8bpp() {
+    let img = mkimage().export_image(ImageFormat::PngGamma8Bpp).unwrap();
+
+    // std::fs::write("tests/test_8bpp.png", &img).unwrap();
+    let golden_img = include_bytes!("test_8bpp.png");
+    assert_eq!(img, golden_img);
+}
+
+#[test]
+#[cfg(feature = "png")]
+fn export_window_png8bpp() {
+    let wnd = Window::new(32, 16).at(5, 8);
+
+    let img = mkimage()
+        .export_window_image(wnd, ImageFormat::PngGamma8Bpp)
+        .unwrap();
+
+    // std::fs::write("tests/test_wnd_8bpp.png", &img).unwrap();
+    let golden_img = include_bytes!("test_wnd_8bpp.png");
+    assert_eq!(img, golden_img);
+}
+
+#[test]
+#[cfg(feature = "png")]
+fn export_png16bpp() {
+    let img = mkimage().export_image(ImageFormat::PngLinear16Bpp).unwrap();
+
+    // std::fs::write("tests/test_16bpp.png", &img).unwrap();
+    let golden_img = include_bytes!("test_16bpp.png");
+    assert_eq!(img, golden_img);
+}
+
+#[test]
+#[cfg(feature = "png")]
+fn export_window_png16bpp() {
+    let wnd = Window::new(32, 16).at(5, 8);
+
+    let img = mkimage()
+        .export_window_image(wnd, ImageFormat::PngLinear16Bpp)
+        .unwrap();
+
+    // std::fs::write("tests/test_wnd_16bpp.png", &img).unwrap();
+    let golden_img = include_bytes!("test_wnd_16bpp.png");
+    assert_eq!(img, golden_img);
+}
