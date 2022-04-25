@@ -40,6 +40,17 @@ fn export_window_raw8bpp() {
 }
 
 #[test]
+fn export_sub_raw8bpp() {
+    let img = mkimage()
+        .export_subsampled_image((2, 2), ImageFormat::RawGamma8Bpp)
+        .unwrap();
+
+    // std::fs::write("tests/test_sub_8bpp.raw", &img).unwrap();
+    let golden_img = include_bytes!("test_sub_8bpp.raw");
+    assert_eq!(img, golden_img);
+}
+
+#[test]
 fn export_raw10bpp() {
     let img = mkimage()
         .export_image(ImageFormat::RawLinear10BppLE)

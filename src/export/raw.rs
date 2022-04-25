@@ -45,6 +45,28 @@ impl Canvas {
         Ok(rawbuf)
     }
 
+    /// Exports the subsampled canvas contents in the 8-bit gamma-compressed
+    /// RAW image format.
+    pub(super) fn export_sub_raw8bpp(&self, factors: (u32, u32)) -> Result<Vec<u8>, EncoderError> {
+        // Subsampled image size in pixels
+        let pixlen = self.pixbuf.len() / (factors.0 * factors.1) as usize;
+
+        // Memory buffer to encode the RAW pixel data to
+        let mut rawbuf: Vec<u8> = Vec::with_capacity(pixlen);
+
+        for i in 0..(self.height / factors.1) {
+            let loffset = (i * factors.1 * self.width) as usize;
+
+            for j in 0..(self.width / factors.0) {
+                let offset = loffset + (j * factors.0) as usize;
+                let xval = self.gamma_curve.transform(self.pixbuf[offset]);
+                rawbuf.push(xval);
+            }
+        }
+
+        Ok(rawbuf)
+    }
+
     /// Exports the subsampled canvas contents in the `X`-bit linear light grayscale
     /// little-endian RAW image format.
     ///
@@ -100,6 +122,16 @@ mod tests {
         assert_eq!(img.len(), 256 * 256);
         assert_eq!(img[0], 33);
         assert_eq!(img[150 * 256 + 100], 238);
+    }
+
+    #[test]
+    fn export_sub_raw8bpp() {
+        let img = mkimage()
+            .export_subsampled_image((2, 2), ImageFormat::RawGamma8Bpp)
+            .unwrap();
+        assert_eq!(img.len(), 256 * 256 / 2 / 2);
+        assert_eq!(img[0], 33);
+        assert_eq!(img[(150 * 128 + 100) / 2], 238);
     }
 
     #[test]

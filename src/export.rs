@@ -277,6 +277,7 @@ impl Canvas {
         format: ImageFormat,
     ) -> Result<Vec<u8>, EncoderError> {
         match format {
+            ImageFormat::RawGamma8Bpp => self.export_sub_raw8bpp(factors),
             ImageFormat::RawLinear10BppLE => self.export_sub_raw1xbpp::<10>(factors),
             ImageFormat::RawLinear12BppLE => self.export_sub_raw1xbpp::<12>(factors),
             _ => Err(EncoderError::NotImplemented),
