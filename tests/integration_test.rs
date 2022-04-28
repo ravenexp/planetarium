@@ -146,6 +146,18 @@ fn export_window_png8bpp() {
 
 #[test]
 #[cfg(feature = "png")]
+fn export_sub_png8bpp() {
+    let img = mkimage()
+        .export_subsampled_image((2, 2), ImageFormat::PngGamma8Bpp)
+        .unwrap();
+
+    // std::fs::write("tests/test_sub_8bpp.png", &img).unwrap();
+    let golden_img = include_bytes!("test_sub_8bpp.png");
+    assert_eq!(img, golden_img);
+}
+
+#[test]
+#[cfg(feature = "png")]
 fn export_png16bpp() {
     let img = mkimage().export_image(ImageFormat::PngLinear16Bpp).unwrap();
 

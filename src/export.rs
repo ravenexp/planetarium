@@ -271,6 +271,7 @@ impl Canvas {
     ///
     /// The integer subsampling factors in X and Y directions
     /// are passed in `factors`.
+    #[cfg(not(feature = "png"))]
     pub fn export_subsampled_image(
         &self,
         factors: (u32, u32),
@@ -316,6 +317,25 @@ impl Canvas {
             ImageFormat::RawLinear12BppLE => self.export_raw1xbpp::<12>(window),
             ImageFormat::PngGamma8Bpp => self.export_png8bpp(window),
             ImageFormat::PngLinear16Bpp => self.export_png16bpp(window),
+        }
+    }
+
+    /// Exports the subsampled canvas image in the requested image format.
+    ///
+    /// The integer subsampling factors in X and Y directions
+    /// are passed in `factors`.
+    #[cfg(feature = "png")]
+    pub fn export_subsampled_image(
+        &self,
+        factors: (u32, u32),
+        format: ImageFormat,
+    ) -> Result<Vec<u8>, EncoderError> {
+        match format {
+            ImageFormat::RawGamma8Bpp => self.export_sub_raw8bpp(factors),
+            ImageFormat::RawLinear10BppLE => self.export_sub_raw1xbpp::<10>(factors),
+            ImageFormat::RawLinear12BppLE => self.export_sub_raw1xbpp::<12>(factors),
+            ImageFormat::PngGamma8Bpp => self.export_sub_png8bpp(factors),
+            _ => Err(EncoderError::NotImplemented),
         }
     }
 }
