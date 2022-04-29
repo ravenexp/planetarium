@@ -74,6 +74,29 @@ fn png_write_sub_8bpp<W: Write>(mut writer: Writer<W>, canvas: &Canvas, factors:
     }
 }
 
+/// Helper function (subsampling version) to work around several
+/// `png` crate API warts.
+///
+/// It is essential that `png::Writer` is moved into this function
+/// and dropped here!
+fn png_write_sub_16bpp<W: Write>(mut writer: Writer<W>, canvas: &Canvas, factors: (u32, u32)) {
+    // FIXME: Do we need error handling here?
+    let mut stream = writer.stream_writer().unwrap();
+
+    for i in 0..(canvas.height / factors.1) {
+        let loffset = (i * factors.1 * canvas.width) as usize;
+
+        for j in 0..(canvas.width / factors.0) {
+            let offset = loffset + (j * factors.0) as usize;
+
+            // Convert pixels to 16-bit Big Endian sample data as required
+            // by the PNG format specification.
+            let bytes = canvas.pixbuf[offset].to_be_bytes();
+            stream.write_all(&bytes).unwrap();
+        }
+    }
+}
+
 impl Canvas {
     /// Exports the canvas window contents in the 8-bit gamma-compressed PNG image format.
     pub(super) fn export_png8bpp(&self, window: Window) -> Result<Vec<u8>, EncoderError> {
@@ -153,6 +176,33 @@ impl Canvas {
 
         Ok(pngbuf)
     }
+
+    /// Exports the subsampled canvas contents in the 16-bit linear light
+    /// PNG image format.
+    pub(super) fn export_sub_png16bpp(&self, factors: (u32, u32)) -> Result<Vec<u8>, EncoderError> {
+        // Memory buffer to encode the PNG data to
+        let mut pngbuf: Vec<u8> = Vec::with_capacity(PNG_BUF_CAPACITY);
+
+        // Subsampled image dimensions
+        let width = self.width / factors.0;
+        let height = self.height / factors.1;
+
+        // Turn `&mut Vec<u8>` into something that implements `std::io::Write`.
+        let cursor = Cursor::new(&mut pngbuf);
+
+        let mut encoder = Encoder::new(cursor, width, height);
+        encoder.set_color(ColorType::Grayscale);
+        encoder.set_depth(BitDepth::Sixteen);
+        encoder.set_source_gamma(ScaledFloat::new(1.0));
+
+        // FIXME: Do we need error handling here?
+        let writer = encoder.write_header().unwrap();
+
+        // Do not attempt to inline this!
+        png_write_sub_16bpp(writer, self, factors);
+
+        Ok(pngbuf)
+    }
 }
 
 #[cfg(test)]
@@ -214,5 +264,13 @@ mod tests {
             .export_window_image(wnd, ImageFormat::PngLinear16Bpp)
             .unwrap();
         assert_eq!(img.len(), 756);
+    }
+
+    #[test]
+    fn export_sub_png16bpp() {
+        let img = mkimage()
+            .export_subsampled_image((2, 2), ImageFormat::PngLinear16Bpp)
+            .unwrap();
+        assert_eq!(img.len(), 591);
     }
 }

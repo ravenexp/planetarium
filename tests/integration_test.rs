@@ -179,3 +179,15 @@ fn export_window_png16bpp() {
     let golden_img = include_bytes!("test_wnd_16bpp.png");
     assert_eq!(img, golden_img);
 }
+
+#[test]
+#[cfg(feature = "png")]
+fn export_sub_png16bpp() {
+    let img = mkimage()
+        .export_subsampled_image((2, 4), ImageFormat::PngLinear16Bpp)
+        .unwrap();
+
+    // std::fs::write("tests/test_sub_16bpp.png", &img).unwrap();
+    let golden_img = include_bytes!("test_sub_16bpp.png");
+    assert_eq!(img, golden_img);
+}

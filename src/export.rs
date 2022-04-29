@@ -335,7 +335,7 @@ impl Canvas {
             ImageFormat::RawLinear10BppLE => self.export_sub_raw1xbpp::<10>(factors),
             ImageFormat::RawLinear12BppLE => self.export_sub_raw1xbpp::<12>(factors),
             ImageFormat::PngGamma8Bpp => self.export_sub_png8bpp(factors),
-            _ => Err(EncoderError::NotImplemented),
+            ImageFormat::PngLinear16Bpp => self.export_sub_png16bpp(factors),
         }
     }
 }
