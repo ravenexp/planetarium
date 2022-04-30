@@ -175,6 +175,36 @@
 //! // Only the pixels within the window rectangle are exported.
 //! assert_eq!(raw_window_bytes.len(), 32 * 16);
 //! ```
+//!
+//! Subsampled image export
+//! -----------------------
+//!
+//! The `Canvas` object additionally supports subsampled image export
+//! with independent row and column subsampling factors.
+//!
+//! Only whole canvas images can be exported with subsampling.
+//!
+//! ### Example subsampled image export code
+//!
+//! ```
+//! use planetarium::{Canvas, ImageFormat};
+//!
+//! let mut c = Canvas::new(256, 256);
+//!
+//! c.set_background(1000);
+//! c.clear();
+//!
+//! let fmt = ImageFormat::RawLinear10BppLE;
+//!
+//! // Column (X) and row (Y) subsampling factors
+//! let factors = (4, 2);
+//!
+//! // Export to the subsampled canvas image bytes.
+//! let raw_sub_bytes = c.export_subsampled_image(factors, fmt).unwrap();
+//!
+//! // Count 4x2 subsampled image pixels.
+//! assert_eq!(raw_sub_bytes.len(), 2 * 64 * 128);
+//! ```
 
 mod draw;
 mod export;

@@ -147,7 +147,7 @@ by the public `Window` structure.
 ### Example window image export code
 
 ```rust
-let mut c = Canvas::new(256, 256);
+let c = Canvas::new(256, 256);
 
 // Create a 32x16 pixels window with origin at (100, 150).
 let wnd = Window::new(32, 16).at(100, 150);
@@ -156,4 +156,26 @@ let fmt = ImageFormat::RawGamma8Bpp;
 
 // Export to the canvas window image bytes.
 let raw_window_bytes = c.export_window_image(wnd, fmt).unwrap();
+```
+
+Subsampled image export
+-----------------------
+
+The `Canvas` object additionally supports subsampled image export
+with independent row and column subsampling factors.
+
+Only whole canvas images can be exported with subsampling.
+
+### Example subsampled image export code
+
+```rust
+let c = Canvas::new(256, 256);
+
+let fmt = ImageFormat::RawLinear10BppLE;
+
+// Column (X) and row (Y) subsampling factors
+let factors = (4, 2);
+
+// Export to the subsampled canvas image bytes.
+let raw_sub_bytes = c.export_subsampled_image(factors, fmt).unwrap();
 ```
