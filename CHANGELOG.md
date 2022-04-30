@@ -1,6 +1,31 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2022-04-30
+
+### CI configuration
+
+- Update and simplify GitLab CI config
+- Add `rust.yml` workflow
+- Add `publish.yml` workflow
+
+### Documentation
+
+- Add a sample image to README.md
+- Add subsampled image export examples
+
+### Features
+
+- Implement subsampled gamma RAW image export
+- Implement subsampled 8-bit PNG image export
+- Implement subsampled 16-bit PNG image export
+
+### Testing
+
+- Refactor canvas image export unit tests
+- Add raw image export integration tests
+- Add PNG image export integration tests
+
 ## [0.1.4] - 2022-03-03
 
 ### Bug Fixes
