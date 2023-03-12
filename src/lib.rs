@@ -525,6 +525,7 @@ impl std::fmt::Display for Transform {
 
 impl SpotShape {
     /// Linearly scales the spot shape by a single scalar factor.
+    #[must_use]
     pub fn scale(&self, k: f32) -> SpotShape {
         let xx = k * self.xx;
         let xy = k * self.xy;
@@ -535,6 +536,7 @@ impl SpotShape {
     }
 
     /// Linearly stretches the spot shape in X and Y directions.
+    #[must_use]
     pub fn stretch(&self, kx: f32, ky: f32) -> SpotShape {
         let xx = kx * self.xx;
         let xy = kx * self.xy;
@@ -545,6 +547,7 @@ impl SpotShape {
     }
 
     /// Rotates the spot shape counter-clockwise by `phi` degrees.
+    #[must_use]
     pub fn rotate(&self, phi: f32) -> SpotShape {
         let phi_rad = (std::f32::consts::PI / 180.0) * phi;
 
@@ -561,6 +564,7 @@ impl SpotShape {
 
 impl Transform {
     /// Linearly translates the output coordinates by a shift vector.
+    #[must_use]
     pub fn translate(&self, shift: Vector) -> Transform {
         let mut transform = *self;
 
@@ -571,6 +575,7 @@ impl Transform {
     }
 
     /// Linearly scales the coordinates by a single scalar factor.
+    #[must_use]
     pub fn scale(&self, k: f32) -> Transform {
         let xx = k * self.xx;
         let xy = k * self.xy;
@@ -590,6 +595,7 @@ impl Transform {
     }
 
     /// Linearly stretches the coordinates in X and Y directions.
+    #[must_use]
     pub fn stretch(&self, kx: f32, ky: f32) -> Transform {
         let xx = kx * self.xx;
         let xy = kx * self.xy;
@@ -609,6 +615,7 @@ impl Transform {
     }
 
     /// Rotates the coordinates counter-clockwise by `phi` degrees.
+    #[must_use]
     pub fn rotate(&self, phi: f32) -> Transform {
         let phi_rad = (std::f32::consts::PI / 180.0) * phi;
 
@@ -634,6 +641,7 @@ impl Transform {
     /// Composes the coordinate transformation with an outer transformation.
     ///
     /// In the matrix multiplication form: `[t][self]`
+    #[must_use]
     pub fn compose(&self, t: Transform) -> Transform {
         let xx = self.xx * t.xx + self.yx * t.xy;
         let xy = self.xy * t.xx + self.yy * t.xy;
@@ -653,6 +661,7 @@ impl Transform {
     }
 
     /// Transforms 2D point coordinates using the affine transformation matrix.
+    #[must_use]
     fn apply(&self, p: Point) -> Point {
         let x = p.0 * self.xx + p.1 * self.xy + self.tx;
         let y = p.1 * self.yy + p.0 * self.yx + self.ty;
@@ -663,6 +672,7 @@ impl Transform {
 
 impl Canvas {
     /// Creates a new clear canvas to render light spots on.
+    #[must_use]
     pub fn new(width: u32, height: u32) -> Self {
         let background = 0;
         let spots = Vec::with_capacity(8);
@@ -714,6 +724,7 @@ impl Canvas {
     /// The canvas coordinates are calculated as the immutable spot position coordinates
     /// shifted by the variable spot offset vector and transformed using the view
     /// coordinate transformation.
+    #[must_use]
     pub fn spot_position(&self, spot: SpotId) -> Option<Point> {
         let view_transform = |s: &SpotRec| {
             let world_pos = ((s.position.0 + s.offset.0), (s.position.1 + s.offset.1));
@@ -728,6 +739,7 @@ impl Canvas {
     /// The effective peak intensity is calculated as the product of the immutable spot
     /// intensity factor, the variable spot illumination factor
     /// and the global brightness level.
+    #[must_use]
     pub fn spot_intensity(&self, spot: SpotId) -> Option<f32> {
         self.spots
             .get(spot)
@@ -775,11 +787,13 @@ impl Canvas {
     }
 
     /// Returns the rendered image pixels buffer.
+    #[must_use]
     pub fn pixels(&self) -> &[Pixel] {
         &self.pixbuf
     }
 
     /// Returns the canvas dimensions as `(width, height)`.
+    #[must_use]
     pub fn dimensions(&self) -> (u32, u32) {
         (self.width, self.height)
     }

@@ -19,6 +19,7 @@ impl GammaCurve8 {
     const LUT_BITS: u32 = 12;
 
     /// Allocates and initializes the gamma compression LUT entries.
+    #[must_use]
     pub(crate) fn new() -> Self {
         let size = 1u32 << Self::LUT_BITS;
 
@@ -44,6 +45,7 @@ impl GammaCurve8 {
 
     /// Converts 16-bit linear light raw samples into
     /// 8-bit gamma-compressed sRGB grayscale samples.
+    #[must_use]
     pub(crate) fn transform(&self, x: u16) -> u8 {
         let shift = 16 - Self::LUT_BITS;
         let i = (x >> shift) as usize;

@@ -41,6 +41,7 @@ impl AiryPattern {
     const INDEX_SCALE: f32 = ((Self::LUT_SIZE - 1) as f32) / Self::SIZE_FACTOR;
 
     /// Creates the Airy intensity pattern function LUT.
+    #[must_use]
     pub(crate) fn new() -> Self {
         let lut_fn = |i| {
             // Resolve singularity at x = 0
@@ -63,6 +64,7 @@ impl AiryPattern {
     }
 
     /// Evaluates the Airy intensity pattern function.
+    #[must_use]
     pub(crate) fn eval(&self, x: f32) -> f32 {
         // Calculate the LUT index with rounding to the nearest integer.
         let i = (x * Self::INDEX_SCALE + 0.5) as usize;

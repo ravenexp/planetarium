@@ -180,6 +180,7 @@ impl std::error::Error for EncoderError {}
 
 impl Window {
     /// Creates a new window with given dimensions located at the origin.
+    #[must_use]
     pub fn new(width: u32, height: u32) -> Self {
         Window {
             x: 0,
@@ -190,6 +191,7 @@ impl Window {
     }
 
     /// Moves the window origin to the given origin coordinates.
+    #[must_use]
     pub fn at(&self, x: u32, y: u32) -> Window {
         let w = self.w;
         let h = self.h;
@@ -198,11 +200,13 @@ impl Window {
     }
 
     /// Checks if the window rectangle is inside the canvas rectangle.
+    #[must_use]
     fn is_inside(&self, width: u32, height: u32) -> bool {
         self.x + self.w <= width && self.y + self.h <= height
     }
 
     /// Returns the total number of pixels in the window.
+    #[must_use]
     fn len(&self) -> usize {
         (self.w * self.h) as usize
     }
@@ -215,6 +219,7 @@ impl Canvas {
     /// Each window scanline is represented as a pixel span (`&[Pixel]` slice).
     ///
     /// Returns `None` is the window rectangle is out of bounds for the canvas.
+    #[must_use]
     pub fn window_spans(&self, window: Window) -> Option<WindowSpans<'_>> {
         if !window.is_inside(self.width, self.height) {
             return None;

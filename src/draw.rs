@@ -13,6 +13,7 @@ use crate::pattern::AiryPattern;
 impl SpotShape {
     /// Calculates the effective radius of the spot image
     /// projected onto the coordinate axes as XY components.
+    #[must_use]
     fn effective_radius_xy(&self) -> (f32, f32) {
         // Rx = F*sqrt(a11^2 + a12^2), Ry = F*sqrt(a22^2 + a21^2))
         (
@@ -24,6 +25,7 @@ impl SpotShape {
     /// Inverts the shape definition matrix.
     ///
     /// Returns the inverted matrix.
+    #[must_use]
     pub(super) fn invert(&self) -> SpotShape {
         let det = self.xx * self.yy - self.xy * self.yx;
 
@@ -47,6 +49,7 @@ impl SpotShape {
     /// Transforms a 2D vector using the shape definition matrix.
     ///
     /// Returns the transformed vector.
+    #[must_use]
     fn apply(&self, vec: Vector) -> Vector {
         let x = vec.0 * self.xx + vec.1 * self.xy;
         let y = vec.1 * self.yy + vec.0 * self.yx;
@@ -72,6 +75,7 @@ impl BoundingBox {
     /// Calculates the bounding box for a light spot from its shape and position.
     ///
     /// Clips to box dimensions to the underlying canvas size.
+    #[must_use]
     fn new(position: Point, shape: &SpotShape, width: u32, height: u32) -> Self {
         let (rx, ry) = shape.effective_radius_xy();
         let (px, py) = position;
@@ -86,6 +90,7 @@ impl BoundingBox {
     }
 
     /// Checks if the bounding box is contains no pixels.
+    #[must_use]
     fn is_empty(&self) -> bool {
         self.x0 == self.x1 || self.y0 == self.y1
     }
@@ -132,6 +137,7 @@ impl Canvas {
     ///
     /// This version calculates a unit Airy disk pattern deformed
     /// by the `SpotShape` transformation matrix.
+    #[must_use]
     fn eval_spot_pixel(
         &self,
         center: Point,
