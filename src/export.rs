@@ -218,7 +218,10 @@ impl Canvas {
     /// The iteration starts from the window origin and goes in the positive Y direction.
     /// Each window scanline is represented as a pixel span (`&[Pixel]` slice).
     ///
-    /// Returns `None` is the window rectangle is out of bounds for the canvas.
+    /// # Errors
+    ///
+    /// Returns `None` is the window rectangle origin or dimensions
+    /// are out of the canvas bounds.
     #[must_use]
     pub fn window_spans(&self, window: Window) -> Option<WindowSpans<'_>> {
         if !window.is_inside(self.width, self.height) {
@@ -240,6 +243,11 @@ impl Canvas {
     }
 
     /// Exports the canvas contents in the requested image format.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EncoderError::NotImplemented`] if the requested image format
+    /// is not yet supported.
     #[cfg(not(feature = "png"))]
     pub fn export_image(&self, format: ImageFormat) -> Result<Vec<u8>, EncoderError> {
         // Export the entire canvas.
@@ -254,6 +262,14 @@ impl Canvas {
     }
 
     /// Exports the canvas window image in the requested image format.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EncoderError::NotImplemented`] if the requested image format
+    /// is not yet supported.
+    ///
+    /// Returns [`EncoderError::BrokenWindow`] if the window rectangle origin
+    /// or dimensions are out of the canvas bounds.
     #[cfg(not(feature = "png"))]
     pub fn export_window_image(
         &self,
@@ -276,6 +292,11 @@ impl Canvas {
     ///
     /// The integer subsampling factors in X and Y directions
     /// are passed in `factors`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EncoderError::NotImplemented`] if the requested image format
+    /// is not yet supported.
     #[cfg(not(feature = "png"))]
     pub fn export_subsampled_image(
         &self,
@@ -291,6 +312,11 @@ impl Canvas {
     }
 
     /// Exports the canvas contents in the requested image format.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EncoderError::NotImplemented`] if the requested image format
+    /// is not yet supported.
     #[cfg(feature = "png")]
     pub fn export_image(&self, format: ImageFormat) -> Result<Vec<u8>, EncoderError> {
         // Export the entire canvas.
@@ -306,6 +332,14 @@ impl Canvas {
     }
 
     /// Exports the canvas window image in the requested image format.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EncoderError::NotImplemented`] if the requested image format
+    /// is not yet supported.
+    ///
+    /// Returns [`EncoderError::BrokenWindow`] if the window rectangle origin
+    /// or dimensions are out of the canvas bounds.
     #[cfg(feature = "png")]
     pub fn export_window_image(
         &self,
@@ -329,6 +363,11 @@ impl Canvas {
     ///
     /// The integer subsampling factors in X and Y directions
     /// are passed in `factors`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EncoderError::NotImplemented`] if the requested image format
+    /// is not yet supported.
     #[cfg(feature = "png")]
     pub fn export_subsampled_image(
         &self,
