@@ -172,7 +172,7 @@ impl std::fmt::Display for Window {
 impl std::fmt::Display for EncoderError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         // FIXME: Put full length error descriptions here.
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 

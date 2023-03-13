@@ -84,17 +84,17 @@ mod tests {
 
         // Central maximum
         let f0 = airy.eval(0.0);
-        assert!((f0 - 1.0).abs() < 1e-6, "F(0) = {}", f0);
+        assert!((f0 - 1.0).abs() < 1e-6, "F(0) = {f0}");
 
         // First zero
         let f1 = airy.eval(1.0);
         // FIXME: 1e-6 precision is possible
-        assert!(f1.abs() < 1e-4, "F(1) = {}", f1);
+        assert!(f1.abs() < 1e-4, "F(1) = {f1}");
 
         // Second zero
         let z2 = J1_ZERO2 / J1_ZERO1;
         let f2 = airy.eval(z2);
         // FIXME: 1e-6 precision is possible
-        assert!(f2.abs() < 1e-5, "F({}) = {}", z2, f2);
+        assert!(f2.abs() < 1e-5, "F({z2}) = {f2}");
     }
 }

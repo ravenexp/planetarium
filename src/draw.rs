@@ -32,7 +32,7 @@ impl SpotShape {
         // Bail on (almost) singular matrices in debug builds,
         // fall back to the unit shape in releases.
         if det.abs() < 0.01 {
-            debug_assert!(false, "Singular shape matrix: {:?}", self);
+            debug_assert!(false, "Singular shape matrix: {self:?}");
             return SpotShape::default();
         }
 
@@ -174,8 +174,8 @@ mod tests {
         const RE: f32 = 1.8309;
         let (rx, ry) = shape.effective_radius_xy();
 
-        assert!((rx - RE).abs() < 1e-4, "rx = {}, RE = {}", rx, RE);
-        assert!((ry - RE).abs() < 1e-4, "ry = {}, RE = {}", ry, RE);
+        assert!((rx - RE).abs() < 1e-4, "rx = {rx}, RE = {RE}");
+        assert!((ry - RE).abs() < 1e-4, "ry = {ry}, RE = {RE}");
 
         let shape = SpotShape {
             xx: 3.0,
@@ -188,8 +188,8 @@ mod tests {
         const RY: f32 = 10.2352;
         let (rx, ry) = shape.effective_radius_xy();
 
-        assert!((rx - RX).abs() < 1e-4, "rx = {}, RX = {}", rx, RX);
-        assert!((ry - RY).abs() < 1e-4, "ry = {}, RY = {}", ry, RY);
+        assert!((rx - RX).abs() < 1e-4, "rx = {rx}, RX = {RX}");
+        assert!((ry - RY).abs() < 1e-4, "ry = {ry}, RY = {RY}");
     }
 
     #[test]
