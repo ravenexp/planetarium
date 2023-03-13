@@ -118,16 +118,16 @@ impl Canvas {
         }
 
         for i in bbox.y0..bbox.y1 {
-            let loff = (i * self.width) as usize;
+            let line_off = (i * self.width) as usize;
 
             for j in bbox.x0..bbox.x1 {
-                let poff = loff + j as usize;
+                let pix_off = line_off + j as usize;
 
                 let pixval = self.eval_spot_pixel(position, &shape_inv, intensity, j, i);
 
                 // Compose light spot patterns using linear intesity addition
                 // with numeric saturation instead of wrapping overflow.
-                self.pixbuf[poff] = self.pixbuf[poff].saturating_add(pixval);
+                self.pixbuf[pix_off] = self.pixbuf[pix_off].saturating_add(pixval);
             }
         }
     }
@@ -159,7 +159,7 @@ impl Canvas {
         let pattern_val = self.pattern.eval(rdist);
 
         // Calculate the final pixel value
-        (intensity * pattern_val * (Pixel::MAX as f32)) as Pixel
+        (intensity * pattern_val * f32::from(Pixel::MAX)) as Pixel
     }
 }
 
@@ -169,9 +169,12 @@ mod tests {
 
     #[test]
     fn calc_radius() {
+        const RE: f32 = 1.830_9;
+        const RX: f32 = 6.141_1;
+        const RY: f32 = 10.235_2;
+
         let shape = SpotShape::default();
 
-        const RE: f32 = 1.8309;
         let (rx, ry) = shape.effective_radius_xy();
 
         assert!((rx - RE).abs() < 1e-4, "rx = {rx}, RE = {RE}");
@@ -184,8 +187,6 @@ mod tests {
             yy: 5.0,
         };
 
-        const RX: f32 = 6.1411;
-        const RY: f32 = 10.2352;
         let (rx, ry) = shape.effective_radius_xy();
 
         assert!((rx - RX).abs() < 1e-4, "rx = {rx}, RX = {RX}");

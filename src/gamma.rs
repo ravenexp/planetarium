@@ -27,7 +27,7 @@ impl GammaCurve8 {
             let x = (i as f32) / ((size - 1) as f32);
 
             // sRGB gamma curve function
-            let gamma = if x <= 0.0031308 {
+            let gamma = if x <= 0.003_130_8 {
                 // Linear segment
                 12.92 * x
             } else {
@@ -35,7 +35,7 @@ impl GammaCurve8 {
                 1.055 * x.powf(1.0 / 2.4) - 0.055
             };
 
-            (gamma * (u8::MAX as f32) + 0.5) as u8
+            (gamma * f32::from(u8::MAX) + 0.5) as u8
         };
 
         let lut = (0..size).map(lut_fn).collect();

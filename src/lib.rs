@@ -708,9 +708,9 @@ impl Canvas {
         let spot = SpotRec {
             position,
             offset,
-            shape,
             intensity,
             illumination,
+            shape,
             shape_inv,
         };
 
@@ -768,7 +768,7 @@ impl Canvas {
 
     /// Clears the canvas image (fills with background pixels).
     pub fn clear(&mut self) {
-        self.pixbuf.fill(self.background)
+        self.pixbuf.fill(self.background);
     }
 
     /// Draws the light spots onto the canvas image.
@@ -782,7 +782,7 @@ impl Canvas {
 
         // `self.spots` can not be borrowed for `draw_spot()`
         for spot_id in 0..self.spots.len() {
-            self.draw_spot(spot_id)
+            self.draw_spot(spot_id);
         }
     }
 

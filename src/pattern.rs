@@ -12,10 +12,10 @@
 use libm::j1f;
 
 /// First positive zero of `J1(x)`
-const J1_ZERO1: f32 = 3.831706;
+const J1_ZERO1: f32 = 3.831_706;
 
 /// Second positive zero of `J1(x)`
-const J1_ZERO2: f32 = 7.015587;
+const J1_ZERO2: f32 = 7.015_587;
 
 /// Opaque Airy pattern function LUT object
 pub(crate) struct AiryPattern {

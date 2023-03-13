@@ -421,7 +421,7 @@ mod tests {
 
         let mut vec = Vec::new();
         for span in c.window_spans(wnd1).unwrap() {
-            vec.extend_from_slice(span)
+            vec.extend_from_slice(span);
         }
 
         assert_eq!(
@@ -433,7 +433,7 @@ mod tests {
 
         vec.clear();
         for span in c.window_spans(wnd2).unwrap() {
-            vec.extend_from_slice(span)
+            vec.extend_from_slice(span);
         }
 
         assert_eq!(vec, [0, 3, 542, 18256, 0, 0, 202, 744, 0, 0, 0, 0]);
