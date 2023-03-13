@@ -71,6 +71,12 @@ struct BoundingBox {
     y1: u32,
 }
 
+#[allow(
+    clippy::cast_possible_wrap,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 impl BoundingBox {
     /// Calculates the bounding box for a light spot from its shape and position.
     ///
@@ -96,6 +102,12 @@ impl BoundingBox {
     }
 }
 
+#[allow(
+    clippy::cast_possible_wrap,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 impl Canvas {
     /// Draws a single light spot image on the canvas.
     pub(super) fn draw_spot(&mut self, spot_id: SpotId) {

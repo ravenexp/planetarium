@@ -23,6 +23,11 @@ pub(crate) struct AiryPattern {
     lut: Vec<f32>,
 }
 
+#[allow(
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation
+)]
 impl AiryPattern {
     /// Fudge factor for the effective spot radius estimation
     ///

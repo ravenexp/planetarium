@@ -18,6 +18,7 @@ use crate::{Canvas, EncoderError, Window};
 /// Initial encoded PNG buffer capacity
 const PNG_BUF_CAPACITY: usize = 0x10000;
 
+#[allow(clippy::unnecessary_wraps)]
 impl Canvas {
     /// Exports the canvas window contents in the 8-bit gamma-compressed PNG image format.
     pub(super) fn export_png8bpp(&self, window: Window) -> Result<Vec<u8>, EncoderError> {

@@ -9,6 +9,7 @@
 
 use crate::{Canvas, EncoderError, Window};
 
+#[allow(clippy::unnecessary_wraps)]
 impl Canvas {
     /// Exports the canvas window contents in the 8-bit gamma-compressed RAW image format.
     pub(super) fn export_raw8bpp(&self, window: Window) -> Result<Vec<u8>, EncoderError> {

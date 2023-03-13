@@ -8,12 +8,19 @@
 //! implementing the sRGB gamma compression curve
 //! with 8-bit output precision.
 
+#![allow(clippy::doc_markdown)]
+
 /// Opaque 16-bit -> 8-bit gamma compression curve LUT object
 pub(crate) struct GammaCurve8 {
     /// LUT byte vector
     lut: Vec<u8>,
 }
 
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 impl GammaCurve8 {
     /// Lookup table resolution (bits)
     const LUT_BITS: u32 = 12;
