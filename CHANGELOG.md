@@ -1,6 +1,27 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.6] - 2023-03-13
+
+### Documentation
+
+- Add `Errors` section to function docstrings
+
+### Features
+
+- Perform subsampling rate factor validation
+
+### Miscellaneous Tasks
+
+- Silence remaining pedantic Clippy warnings
+
+### Refactor
+
+- Clean up the PNG image export code
+- Add `must_use` function attributes
+- Use inline string interpolation
+- Fix pedantic Clippy nitpicks
+
 ## [0.1.5] - 2022-04-30
 
 ### CI configuration
