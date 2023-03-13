@@ -50,7 +50,6 @@ use crate::{Canvas, Pixel};
 /// // Check the resulting string representation.
 /// assert_eq!(wnd1.to_string(), "(100, 200)+(128, 128)");
 /// ```
-
 #[derive(Debug, Clone, Copy)]
 pub struct Window {
     /// Window origin X coordinate
@@ -90,6 +89,8 @@ pub enum EncoderError {
     NotImplemented,
     /// Requested image window is out of bounds
     BrokenWindow,
+    /// Requested image subsampling factors are too large or zero
+    InvalidSubsamplingRate,
 }
 
 /// Canvas window image scanlines iterator
@@ -212,6 +213,25 @@ impl Window {
     }
 }
 
+/// Maximum supported image subsampling factor value
+const MAX_SUBSAMPLING_RATE: u32 = 16;
+
+/// Validates user-provided image subsampling factors
+///
+/// # Errors
+///
+/// Returns [`EncoderError::InvalidSubsamplingRate`] if the image subsampling
+/// factors are too large or zero.
+fn validate_subsampling_rate(factors: (u32, u32)) -> Result<(), EncoderError> {
+    let is_valid = |x| x > 0 && x <= MAX_SUBSAMPLING_RATE;
+
+    if is_valid(factors.0) && is_valid(factors.1) {
+        Ok(())
+    } else {
+        Err(EncoderError::InvalidSubsamplingRate)
+    }
+}
+
 impl Canvas {
     /// Returns an iterator over the canvas window image scanlines.
     ///
@@ -303,6 +323,8 @@ impl Canvas {
         factors: (u32, u32),
         format: ImageFormat,
     ) -> Result<Vec<u8>, EncoderError> {
+        validate_subsampling_rate(factors)?;
+
         match format {
             ImageFormat::RawGamma8Bpp => self.export_sub_raw8bpp(factors),
             ImageFormat::RawLinear10BppLE => self.export_sub_raw1xbpp::<10>(factors),
@@ -374,6 +396,8 @@ impl Canvas {
         factors: (u32, u32),
         format: ImageFormat,
     ) -> Result<Vec<u8>, EncoderError> {
+        validate_subsampling_rate(factors)?;
+
         match format {
             ImageFormat::RawGamma8Bpp => self.export_sub_raw8bpp(factors),
             ImageFormat::RawLinear10BppLE => self.export_sub_raw1xbpp::<10>(factors),
@@ -397,6 +421,35 @@ mod tests {
         assert_eq!(
             c.export_image(ImageFormat::PngGamma8Bpp),
             Err(EncoderError::NotImplemented)
+        );
+    }
+
+    #[test]
+    fn broken_window_error() {
+        let c = Canvas::new(10, 10);
+        let wnd = Window::new(8, 8).at(5, 5);
+
+        assert_eq!(
+            c.export_window_image(wnd, ImageFormat::RawGamma8Bpp),
+            Err(EncoderError::BrokenWindow)
+        );
+    }
+
+    #[test]
+    fn subsampling_rate_error() {
+        let c = Canvas::new(0, 0);
+
+        assert_eq!(
+            c.export_subsampled_image((1, 0), ImageFormat::RawGamma8Bpp),
+            Err(EncoderError::InvalidSubsamplingRate)
+        );
+        assert_eq!(
+            c.export_subsampled_image((0, 1), ImageFormat::RawLinear10BppLE),
+            Err(EncoderError::InvalidSubsamplingRate)
+        );
+        assert_eq!(
+            c.export_subsampled_image((4, 17), ImageFormat::RawLinear12BppLE),
+            Err(EncoderError::InvalidSubsamplingRate)
         );
     }
 
