@@ -198,7 +198,7 @@ mod tests {
     #[test]
     fn export_png8bpp() {
         let img = mkimage().export_image(ImageFormat::PngGamma8Bpp).unwrap();
-        assert_eq!(img.len(), 1258);
+        assert_eq!(img.len(), 1256);
     }
 
     #[test]
@@ -208,7 +208,7 @@ mod tests {
         let img = mkimage()
             .export_window_image(wnd, ImageFormat::PngGamma8Bpp)
             .unwrap();
-        assert_eq!(img.len(), 423);
+        assert_eq!(img.len(), 425);
     }
 
     #[test]
@@ -216,13 +216,13 @@ mod tests {
         let img = mkimage()
             .export_subsampled_image((2, 2), ImageFormat::PngGamma8Bpp)
             .unwrap();
-        assert_eq!(img.len(), 405);
+        assert_eq!(img.len(), 403);
     }
 
     #[test]
     fn export_png16bpp() {
         let img = mkimage().export_image(ImageFormat::PngLinear16Bpp).unwrap();
-        assert_eq!(img.len(), 2550);
+        assert_eq!(img.len(), 2561);
     }
 
     #[test]
@@ -232,7 +232,7 @@ mod tests {
         let img = mkimage()
             .export_window_image(wnd, ImageFormat::PngLinear16Bpp)
             .unwrap();
-        assert_eq!(img.len(), 765);
+        assert_eq!(img.len(), 771);
     }
 
     #[test]
@@ -240,6 +240,6 @@ mod tests {
         let img = mkimage()
             .export_subsampled_image((2, 2), ImageFormat::PngLinear16Bpp)
             .unwrap();
-        assert_eq!(img.len(), 720);
+        assert_eq!(img.len(), 719);
     }
 }

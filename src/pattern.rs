@@ -38,12 +38,13 @@ impl AiryPattern {
     pub(crate) const SIZE_FACTOR: f32 = J1_ZERO2 / J1_ZERO1;
 
     /// Airy intensity pattern LUT size
-    // FIXME: Increase to 1024 in v0.2 and fix the scale error.
-    const LUT_SIZE: usize = 256;
+    const LUT_SIZE: usize = 1024;
+
+    /// Airy intensity pattern LUT size (floating point)
+    const LUT_SIZE_FP: f32 = Self::LUT_SIZE as f32;
 
     /// LUT index to function argument ratio
-    // FIXME: Minor off by one error here:    v
-    const INDEX_SCALE: f32 = ((Self::LUT_SIZE - 1) as f32) / Self::SIZE_FACTOR;
+    const INDEX_SCALE: f32 = Self::LUT_SIZE_FP / Self::SIZE_FACTOR;
 
     /// Creates the Airy intensity pattern function LUT.
     #[must_use]
@@ -52,7 +53,7 @@ impl AiryPattern {
             // Resolve singularity at x = 0
             if i > 0 {
                 // Airy pattern function argument
-                let x = (i as f32) * J1_ZERO2 / (Self::LUT_SIZE as f32);
+                let x = (i as f32) * J1_ZERO2 / Self::LUT_SIZE_FP;
 
                 // Airy disc pattern intensity distribution
                 let j1nc = 2.0 * j1f(x) / x;
@@ -89,17 +90,42 @@ mod tests {
 
         // Central maximum
         let f0 = airy.eval(0.0);
-        assert!((f0 - 1.0).abs() < 1e-6, "F(0) = {f0}");
+        assert!((f0 - 1.0).abs() < 1e-7, "F(0) = {f0}");
 
         // First zero
-        let f1 = airy.eval(1.0);
-        // FIXME: 1e-6 precision is possible
-        assert!(f1.abs() < 1e-4, "F(1) = {f1}");
+        let z1 = 1.0;
+
+        let f1 = airy.eval(z1);
+        assert!(f1.abs() < 2e-7, "F({z1}) = {f1}");
+
+        // First zero - eps
+        let z1dx = z1 - 2e-3;
+
+        let f1dy = airy.eval(z1dx);
+        assert!(f1dy.abs() < 4e-6, "F({z1dx}) = {f1dy}");
 
         // Second zero
         let z2 = J1_ZERO2 / J1_ZERO1;
+
         let f2 = airy.eval(z2);
-        // FIXME: 1e-6 precision is possible
-        assert!(f2.abs() < 1e-5, "F({z2}) = {f2}");
+        assert!(f2.abs() < 1e-7, "F({z2}) = {f2}");
+
+        // Second zero - eps
+        let z2dx = z2 - 1e-3;
+
+        let f2dy = airy.eval(z2dx);
+        assert!(f2dy.abs() < 4e-7, "F({z2dx}) = {f2dy}");
+
+        // Out of range zero < 2LUT
+        let z3 = 1.5 * z2;
+        let f3 = airy.eval(z3);
+        assert!(f3.abs() < 1e-7);
+
+        // Out of range zero > 2LUT
+        let z4 = 3.5 * z2;
+        let f4 = airy.eval(z4);
+        assert!(f4.abs() < 1e-7);
+
+        // assert!(false, "T = {:?}", airy.lut)
     }
 }

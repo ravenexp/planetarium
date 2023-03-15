@@ -143,7 +143,7 @@ mod tests {
             .export_window_image(wnd, ImageFormat::RawGamma8Bpp)
             .unwrap();
         assert_eq!(img.len(), wnd.len());
-        assert_eq!(img[300], 186);
+        assert_eq!(img[300], 185);
     }
 
     #[test]
@@ -154,7 +154,7 @@ mod tests {
         assert_eq!(img.len(), 256 * 256 * 2);
         assert_eq!(img[0], 0x0F);
         assert_eq!(img[1], 0x00);
-        assert_eq!(img[2 * (150 * 256 + 100)], 104);
+        assert_eq!(img[2 * (150 * 256 + 100)], 106);
         assert_eq!(img[2 * (150 * 256 + 100) + 1], 3);
     }
 
@@ -166,7 +166,7 @@ mod tests {
         assert_eq!(img.len(), 256 * 256 * 2 / 2 / 2);
         assert_eq!(img[0], 0x0F);
         assert_eq!(img[1], 0x00);
-        assert_eq!(img[2 * (150 * 128 + 100) / 2], 104);
+        assert_eq!(img[2 * (150 * 128 + 100) / 2], 106);
         assert_eq!(img[2 * (150 * 128 + 100) / 2 + 1], 3);
     }
 
@@ -178,7 +178,7 @@ mod tests {
             .export_window_image(wnd, ImageFormat::RawLinear10BppLE)
             .unwrap();
         assert_eq!(img.len(), 2 * wnd.len());
-        assert_eq!(img[300 * 2], 243);
+        assert_eq!(img[300 * 2], 240);
         assert_eq!(img[300 * 2 + 1], 1);
     }
 
@@ -190,7 +190,7 @@ mod tests {
         assert_eq!(img.len(), 256 * 256 * 2);
         assert_eq!(img[0], 0x3E);
         assert_eq!(img[1], 0x00);
-        assert_eq!(img[2 * (150 * 256 + 100)], 162);
+        assert_eq!(img[2 * (150 * 256 + 100)], 168);
         assert_eq!(img[2 * (150 * 256 + 100) + 1], 13);
     }
 
@@ -202,7 +202,7 @@ mod tests {
         assert_eq!(img.len(), 256 * 256 * 2 / 4 / 2);
         assert_eq!(img[0], 0x3E);
         assert_eq!(img[1], 0x00);
-        assert_eq!(img[2 * (150 / 2 * 64 + 100 / 4)], 162);
+        assert_eq!(img[2 * (150 / 2 * 64 + 100 / 4)], 168);
         assert_eq!(img[2 * (150 / 2 * 64 + 100 / 4) + 1], 13);
     }
 }

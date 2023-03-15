@@ -1,6 +1,6 @@
 [package]
 name = "planetarium"
-version = "0.1.6"
+version = "0.2.0"
 description = "Sub-pixel precision light spot rendering library"
 repository = "https://github.com/ravenexp/planetarium"
 authors = ["Sergey Kvachonok <ravenexp@gmail.com>"]

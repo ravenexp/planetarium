@@ -298,15 +298,15 @@ mod tests {
         let spot4 = c.add_spot((5.1, 4.6), shape, 0.2);
 
         c.draw_spot(spot1);
-        assert_eq!(c.pixbuf[8 * 4 + 1], 13509);
+        assert_eq!(c.pixbuf[8 * 4 + 1], 13449);
 
         c.draw_spot(spot2);
-        assert_eq!(c.pixbuf[8 * 7 + 5], 12122);
+        assert_eq!(c.pixbuf[8 * 7 + 5], 11960);
 
         c.draw_spot(spot3);
-        assert_eq!(c.pixbuf[8 * 3 + 7], 12122);
+        assert_eq!(c.pixbuf[8 * 3 + 7], 11960);
 
         c.draw_spot(spot4);
-        assert_eq!(c.pixbuf[8 * 5 + 5], 6879);
+        assert_eq!(c.pixbuf[8 * 5 + 5], 6755);
     }
 }

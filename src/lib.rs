@@ -991,7 +991,7 @@ mod tests {
         c.set_background(1000);
         c.draw();
 
-        assert_eq!(c.pixels()[32 * 4 + 1], 31823);
+        assert_eq!(c.pixels()[32 * 4 + 1], 31876);
         assert_eq!(c.pixels()[32 * 7 + 5], 53389);
         assert_eq!(c.pixels()[32 * 26 + 17], 65535);
         assert_eq!(c.pixels()[32 * 10 + 30], 37774);
@@ -1004,12 +1004,12 @@ mod tests {
 
         c.draw();
 
-        assert_eq!(c.pixels()[32 * 4 + 1], 47235);
+        assert_eq!(c.pixels()[32 * 4 + 1], 47314);
         assert_eq!(c.pixels()[32 * 7 + 5], 65535);
         assert_eq!(c.pixels()[32 * 26 + 17], 1000);
         assert_eq!(c.pixels()[32 * 10 + 30], 56161);
 
         // new spot3 location
-        assert_eq!(c.pixels()[32 * 31 + 3], 28020);
+        assert_eq!(c.pixels()[32 * 31 + 3], 27742);
     }
 }
