@@ -40,6 +40,9 @@ impl AiryPattern {
     /// Airy intensity pattern LUT size
     const LUT_SIZE: usize = 1024;
 
+    /// Pattern LUT zero-padding length
+    const LUT_PADDING_LEN: usize = Self::LUT_SIZE;
+
     /// Airy intensity pattern LUT size (floating point)
     const LUT_SIZE_FP: f32 = Self::LUT_SIZE as f32;
 
@@ -51,20 +54,28 @@ impl AiryPattern {
     pub(crate) fn new() -> Self {
         let lut_fn = |i| {
             // Resolve singularity at x = 0
-            if i > 0 {
+            if i == 0 {
+                // J1(x) ~ x/2, x -> 0
+                1.0
+            } else if i >= Self::LUT_SIZE {
+                // Clamp to zero for x > J1_ZERO2
+                0.0
+            } else {
+                // Evaluate the Airy function:
+
                 // Airy pattern function argument
                 let x = (i as f32) * J1_ZERO2 / Self::LUT_SIZE_FP;
 
                 // Airy disc pattern intensity distribution
                 let j1nc = 2.0 * j1f(x) / x;
                 j1nc * j1nc
-            } else {
-                // J1(x) ~ x/2, x -> 0
-                1.0
             }
         };
 
-        let lut = (0..Self::LUT_SIZE).map(lut_fn).collect();
+        // LUT array length: include the table and the zero-padding space
+        let len = Self::LUT_SIZE + Self::LUT_PADDING_LEN;
+
+        let lut = (0..len).map(lut_fn).collect();
 
         AiryPattern { lut }
     }
