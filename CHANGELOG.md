@@ -1,5 +1,17 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
+
+## [0.2.0] - 2023-03-16
+
+### Features
+
+- [**breaking**] Use a larger pattern LUT (1024 entries)
+- Add zero padding to the pattern LUT
+
+### Miscellaneous Tasks
+
+- Regenerate `cliff.toml` config
 
 ## [0.1.6] - 2023-03-13
 
